@@ -83,7 +83,7 @@ export interface LudoCashoutResponse {
   providedIn: 'root'
 })
 export class GameService {
-  private readonly apiUrl = 'http://localhost:5000/api';
+  private readonly apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 

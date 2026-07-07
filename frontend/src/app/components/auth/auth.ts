@@ -204,9 +204,10 @@ export class Auth implements AfterViewInit {
         client_id: '965877400039-isl9dli56jh3qqqeqt9of8gccneahs5o.apps.googleusercontent.com',
         callback: (response: any) => this.handleGoogleCredentialResponse(response)
       });
+      const btnWidth = Math.min(360, window.innerWidth - 64);
       google.accounts.id.renderButton(
         document.getElementById('google-btn'),
-        { theme: 'outline', size: 'large', width: '360' }
+        { theme: 'outline', size: 'large', width: btnWidth.toString() }
       );
     } else if (attempts < 10) {
       setTimeout(() => this.checkGoogleSdk(attempts + 1), 300);
