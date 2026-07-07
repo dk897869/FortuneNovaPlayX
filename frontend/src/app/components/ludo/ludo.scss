@@ -1,0 +1,343 @@
+.game-container {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  width: 100%;
+}
+
+.control-panel, .board-panel {
+  padding: 24px;
+}
+
+.panel-title {
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 12px;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+// --- Ludo Arena Layout ---
+.board-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ludo-arena {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// --- Arena Header with Die ---
+.arena-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 12px;
+  border: 1px solid var(--border-glass);
+
+  .last-roll-log {
+    .roll-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: rgba(249, 115, 22, 0.15);
+      color: #fb923c;
+      border: 1px solid rgba(249, 115, 22, 0.3);
+
+      &.idle {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+}
+
+// Dice box styling
+.die-container {
+  font-size: 3.5rem;
+  line-height: 1;
+  color: #fff;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  user-select: none;
+  transition: transform 0.1s ease;
+
+  &.die-rolling {
+    animation: die-spin-shake 0.15s infinite;
+  }
+}
+
+@keyframes die-spin-shake {
+  0%, 100% { transform: scale(1.1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(-15deg); }
+  75% { transform: scale(1.1) rotate(15deg); }
+}
+
+// --- Serpentine Track ---
+.ludo-track {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.ludo-cell {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+
+  .cell-num {
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  .cell-decor {
+    font-size: 1.4rem;
+    margin: auto 0;
+    opacity: 0.75;
+  }
+
+  .cell-multiplier {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  // Cell Types Overrides
+  &.cell-type-start {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.4);
+    
+    .cell-multiplier { color: #60a5fa; }
+  }
+
+  &.cell-star-zone {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.2);
+
+    .cell-multiplier { color: var(--primary-green); }
+  }
+
+  &.cell-danger-zone {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.2);
+
+    .cell-multiplier { color: var(--primary-red); }
+  }
+
+  &.cell-home-zone {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.6);
+    box-shadow: inset 0 0 12px rgba(245, 158, 11, 0.3), 0 0 10px rgba(245, 158, 11, 0.2);
+
+    .cell-multiplier {
+      color: #fbbf24;
+      font-weight: 800;
+    }
+  }
+
+  &.cell-occupied {
+    border-color: #f97316;
+    box-shadow: 0 0 15px rgba(249, 115, 22, 0.25);
+  }
+}
+
+// --- Player & Opponent Token Pieces ---
+.token {
+  position: absolute;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  user-select: none;
+  z-index: 30;
+
+  &.token-red {
+    animation: token-bounce 0.6s infinite alternate cubic-bezier(0.25, 0.8, 0.25, 1);
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 8px rgba(239, 68, 68, 0.4));
+  }
+
+  &.token-blue-opponent {
+    z-index: 25;
+    font-size: 1.3rem;
+    width: 24px;
+    height: 24px;
+    top: auto;
+    left: auto;
+    bottom: 2px;
+    right: 2px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)) drop-shadow(0 0 6px rgba(59, 130, 246, 0.4));
+  }
+}
+
+@keyframes token-bounce {
+  0% { transform: translateY(2px) scale(0.95); }
+  100% { transform: translateY(-4px) scale(1.05); }
+}
+
+// --- Log lines scrolling panel ---
+.ludo-logs {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid var(--border-glass);
+
+  h4 {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 6px;
+  }
+
+  .log-lines {
+    max-height: 85px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .log-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+
+    .time-dot {
+      width: 4px;
+      height: 4px;
+      background: var(--primary-cyan);
+      border-radius: 50%;
+    }
+
+    &:first-child {
+      color: #fff;
+      font-weight: 700;
+      .time-dot { background: var(--primary-green); }
+    }
+  }
+}
+
+// --- Live stats box / details ---
+.live-multiplier-box {
+  padding: 16px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+
+    .label {
+      color: var(--text-secondary);
+    }
+
+    .val {
+      font-family: var(--font-display);
+      font-weight: 700;
+    }
+  }
+}
+
+// --- Fairness panel ---
+.fairness-panel {
+  width: 100%;
+  max-width: 500px;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 10px;
+
+  h3 {
+    font-size: 0.95rem;
+    color: var(--primary-cyan);
+    margin-bottom: 12px;
+  }
+
+  .fairness-row {
+    font-size: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+    
+    .label {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .val {
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: right;
+    }
+
+    .italic { font-style: italic; }
+  }
+
+  .verification-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 820px) {
+  .game-container {
+    grid-template-columns: 1fr;
+  }
+
+  .ludo-arena, .fairness-panel {
+    max-width: 100%;
+  }
+}

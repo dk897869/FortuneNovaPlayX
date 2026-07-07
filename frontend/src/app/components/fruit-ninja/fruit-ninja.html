@@ -1,0 +1,186 @@
+<div class="game-container">
+  
+  <!-- Left Side: Controls -->
+  <div class="control-panel glass-panel">
+    <h2 class="panel-title">Fruit Cut Ninja</h2>
+
+    <!-- Bet Amount -->
+    <div class="form-group">
+      <label class="form-label">Bet Amount</label>
+      <div class="bet-input-wrapper">
+        <input 
+          type="number" 
+          class="form-input bet-input" 
+          min="0.01" 
+          step="any"
+          [(ngModel)]="betAmount" 
+          [disabled]="isGameActive"
+        />
+        <div class="bet-adjusters">
+          <button type="button" class="btn-adjust" (click)="adjustBet('half')" [disabled]="isGameActive">½</button>
+          <button type="button" class="btn-adjust" (click)="adjustBet('double')" [disabled]="isGameActive">2x</button>
+          <button type="button" class="btn-adjust" (click)="adjustBet('max')" [disabled]="isGameActive">Max</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bomb Count -->
+    <div class="form-group">
+      <label class="form-label">Number of Bombs</label>
+      <select class="form-input select-mines" [(ngModel)]="bombCount" [disabled]="isGameActive">
+        @for (count of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]; track count) {
+          <option [value]="count">{{ count }} {{ count === 1 ? 'Bomb' : 'Bombs' }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Client Seed -->
+    <div class="form-group">
+      <label class="form-label">Client Seed</label>
+      <input 
+        type="text" 
+        class="form-input font-mono" 
+        [(ngModel)]="clientSeed" 
+        [disabled]="isGameActive"
+      />
+    </div>
+
+    <!-- Live Stats -->
+    @if (isGameActive) {
+      <div class="live-multiplier-box glass-panel">
+        <div class="stat-row">
+          <span class="label">Current Payout</span>
+          <strong class="val text-cyan">x{{ currentMultiplier | number:'1.2-2' }}</strong>
+        </div>
+        <div class="stat-row">
+          <span class="label">Next Slice Payout</span>
+          <strong class="val text-green">x{{ nextMultiplier | number:'1.2-2' }}</strong>
+        </div>
+        <div class="stat-row">
+          <span class="label">Cash Out Value</span>
+          <strong class="val">{{ (betAmount * currentMultiplier) | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    }
+
+    <!-- Alerts -->
+    @if (errorMessage) {
+      <div class="alert-box alert-error">
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+    @if (winMessage) {
+      <div class="alert-box alert-success">
+        <span>{{ winMessage }}</span>
+      </div>
+    }
+
+    <!-- Primary Actions -->
+    @if (!isGameActive) {
+      <button 
+        type="button" 
+        class="btn-primary w-full mt-4" 
+        [disabled]="isSubmitting || betAmount <= 0" 
+        (click)="onStartGame()"
+      >
+        Start Slicing
+      </button>
+    } @else {
+      <button 
+        type="button" 
+        class="btn-green w-full mt-4" 
+        [disabled]="isSubmitting || !hasSlicedFruits" 
+        (click)="onCashOut()"
+      >
+        Collect Winnings
+      </button>
+    }
+  </div>
+
+  <!-- Right Side: Orchard Board -->
+  <div class="board-panel glass-panel">
+    
+    <!-- 5x5 Orchard Grid -->
+    <div class="orchard-grid" [ngClass]="{ 'grid-disabled': !isGameActive }">
+      @for (cell of cells; track cell.index) {
+        <div 
+          class="orchard-tile" 
+          [ngClass]="{
+            'tile-unrevealed': cell.status === 'unrevealed',
+            'tile-sliced': cell.status === 'sliced',
+            'tile-bomb': cell.status === 'bomb',
+            'tile-bomb-unhit': cell.status === 'bomb-unhit',
+            'tile-shaking': cell.status === 'bomb',
+            'tile-slicing': cell.isSlicing
+          }"
+          (click)="onCellClick(cell)"
+        >
+          <!-- Tile Visuals -->
+          @if (cell.isSlicing) {
+            <div class="slice-slash"></div>
+            <div class="tile-spinner"></div>
+          } @else if (cell.status === 'sliced') {
+            <!-- Sliced Fruit animation split -->
+            <div class="fruit-split-wrapper">
+              <span class="fruit-half half-left">{{ cell.fruitEmoji }}</span>
+              <span class="fruit-half half-right">{{ cell.fruitEmoji }}</span>
+            </div>
+            <div class="slice-line"></div>
+          } @else if (cell.status === 'bomb' || cell.status === 'bomb-unhit') {
+            <!-- Bomb -->
+            <svg class="tile-svg bomb-svg" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="13" r="6" />
+              <path d="M12 7c.5-1.5 2-2.5 3-2.5" stroke="red" stroke-width="2" fill="none"/>
+              <path d="M15 4h1" stroke="red" stroke-width="2"/>
+              <path d="M12 3c-1.1 0-2 .9-2 2h4c0-1.1-.9-2-2-2z" fill="#333"/>
+            </svg>
+          } @else {
+            <!-- Floating Unsliced Fruit -->
+            <span class="fruit-hanging">{{ cell.fruitEmoji }}</span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Provably Fair Logs -->
+    @if (serverSeedHash) {
+      <div class="fairness-panel glass-panel mt-4">
+        <h3>Provably Fair Logs</h3>
+        
+        <div class="fairness-row font-mono">
+          <span class="label">Server Seed Hash (SHA256):</span>
+          <span class="val" title="{{ serverSeedHash }}">{{ serverSeedHash }}</span>
+        </div>
+        
+        @if (serverSeed) {
+          <div class="fairness-row font-mono">
+            <span class="label">Plain Server Seed (Revealed):</span>
+            <span class="val" title="{{ serverSeed }}">{{ serverSeed }}</span>
+          </div>
+        } @else {
+          <div class="fairness-row font-mono">
+            <span class="label">Plain Server Seed:</span>
+            <span class="val text-muted italic">Hidden until game ends</span>
+          </div>
+        }
+
+        <div class="fairness-row font-mono">
+          <span class="label">Client Seed:</span>
+          <span class="val">{{ clientSeed }}</span>
+        </div>
+
+        <div class="fairness-row font-mono">
+          <span class="label">Nonce:</span>
+          <span class="val">{{ nonce }}</span>
+        </div>
+
+        @if (serverSeed) {
+          <p class="verification-note mt-2">
+            Verify this outcome by copying the seeds into the verifier on your <a routerLink="/dashboard" class="text-cyan">Dashboard</a>.
+          </p>
+        }
+      </div>
+    }
+  </div>
+
+</div>

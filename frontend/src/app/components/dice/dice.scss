@@ -1,0 +1,306 @@
+.game-container {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  width: 100%;
+}
+
+.control-panel, .board-panel {
+  padding: 24px;
+}
+
+.panel-title {
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 12px;
+}
+
+// --- Sidebar Control Panel ---
+.bet-input-wrapper {
+  position: relative;
+  display: flex;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+
+  &:focus-within {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--primary-cyan-glow);
+  }
+
+  .bet-input {
+    border: none;
+    background: transparent;
+    padding-right: 12px;
+    width: 60%;
+    
+    &:focus {
+      box-shadow: none;
+      background: transparent;
+    }
+  }
+
+  .bet-adjusters {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 40%;
+    border-left: 1px solid var(--border-glass);
+
+    .btn-adjust {
+      background: rgba(255, 255, 255, 0.02);
+      border: none;
+      border-right: 1px solid var(--border-glass);
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:last-child {
+        border-right: none;
+      }
+
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text-primary);
+      }
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+.chevron-icon {
+  width: 16px;
+  height: 16px;
+}
+
+// --- Right Board Arena Panel ---
+.board-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+// --- Roll Gauge ---
+.roll-gauge-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.roll-gauge-outer {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 4px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
+  &.cyan-glow {
+    border-color: var(--primary-cyan);
+    box-shadow: 0 0 35px var(--primary-cyan-glow);
+  }
+
+  &.green-glow {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 35px var(--primary-green-glow);
+    transform: scale(1.03);
+  }
+
+  &.red-glow {
+    border-color: var(--primary-red);
+    box-shadow: 0 0 35px var(--primary-red-glow);
+  }
+
+  .roll-value {
+    font-family: var(--font-display);
+    font-size: 3.2rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    transition: color 0.3s ease;
+  }
+
+  .gauge-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 6px;
+  }
+}
+
+.text-white { color: #ffffff; }
+
+// --- Range Slider ---
+.slider-wrapper {
+  width: 100%;
+  max-width: 580px;
+  margin: 32px 0;
+}
+
+.dice-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+
+  // Custom Thumb styles
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 3px solid var(--bg-main);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5), 0 0 10px rgba(255,255,255,0.4);
+    cursor: grab;
+    transition: all 0.15s ease;
+
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6), 0 0 15px rgba(255,255,255,0.6);
+    }
+    
+    &:active {
+      cursor: grabbing;
+      background: var(--primary-cyan);
+    }
+  }
+
+  &::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 3px solid var(--bg-main);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    cursor: grab;
+    transition: all 0.15s ease;
+    
+    &:active {
+      cursor: grabbing;
+      background: var(--primary-cyan);
+    }
+  }
+}
+
+.slider-endpoints {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  font-weight: 500;
+
+  .target-indicator {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+}
+
+// --- Odds Info Cards ---
+.odds-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: 580px;
+
+  .odds-card {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 10px;
+
+    .label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: var(--font-display);
+    }
+  }
+}
+
+// --- Fairness Panel ---
+.fairness-panel {
+  width: 100%;
+  max-width: 580px;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 10px;
+
+  h3 {
+    font-size: 0.95rem;
+    color: var(--primary-cyan);
+    margin-bottom: 12px;
+  }
+
+  .fairness-row {
+    font-size: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+    
+    .label {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .val {
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: right;
+    }
+  }
+
+  .verification-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 820px) {
+  .game-container {
+    grid-template-columns: 1fr;
+  }
+
+  .slider-wrapper, .odds-info-grid, .fairness-panel {
+    max-width: 100%;
+  }
+}

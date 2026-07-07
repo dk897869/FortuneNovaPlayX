@@ -1,0 +1,185 @@
+<div class="game-container">
+  
+  <!-- Left Side: Controls -->
+  <div class="control-panel glass-panel">
+    <h2 class="panel-title">Mines Grid</h2>
+
+    <!-- Bet Amount -->
+    <div class="form-group">
+      <label class="form-label">Bet Amount</label>
+      <div class="bet-input-wrapper">
+        <input 
+          type="number" 
+          class="form-input bet-input" 
+          min="0.01" 
+          step="any"
+          [(ngModel)]="betAmount" 
+          [disabled]="isGameActive"
+        />
+        <div class="bet-adjusters">
+          <button type="button" class="btn-adjust" (click)="adjustBet('half')" [disabled]="isGameActive">½</button>
+          <button type="button" class="btn-adjust" (click)="adjustBet('double')" [disabled]="isGameActive">2x</button>
+          <button type="button" class="btn-adjust" (click)="adjustBet('max')" [disabled]="isGameActive">Max</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mines Selector -->
+    <div class="form-group">
+      <label class="form-label">Number of Mines</label>
+      <select class="form-input select-mines" [(ngModel)]="mineCount" [disabled]="isGameActive">
+        @for (count of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]; track count) {
+          <option [value]="count">{{ count }} {{ count === 1 ? 'Mine' : 'Mines' }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Client Seed -->
+    <div class="form-group">
+      <label class="form-label">Client Seed</label>
+      <input 
+        type="text" 
+        class="form-input font-mono" 
+        [(ngModel)]="clientSeed" 
+        [disabled]="isGameActive"
+      />
+    </div>
+
+    <!-- Live Multiplier stats when playing -->
+    @if (isGameActive) {
+      <div class="live-multiplier-box glass-panel">
+        <div class="stat-row">
+          <span class="label">Current Multiplier</span>
+          <strong class="val text-cyan">x{{ currentMultiplier | number:'1.2-2' }}</strong>
+        </div>
+        <div class="stat-row">
+          <span class="label">Next Tile Payout</span>
+          <strong class="val text-green">x{{ nextMultiplier | number:'1.2-2' }}</strong>
+        </div>
+        <div class="stat-row">
+          <span class="label">Cash Out Value</span>
+          <strong class="val">{{ (betAmount * currentMultiplier) | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    }
+
+    <!-- Alerts -->
+    @if (errorMessage) {
+      <div class="alert-box alert-error">
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+    @if (winMessage) {
+      <div class="alert-box alert-success">
+        <span>{{ winMessage }}</span>
+      </div>
+    }
+
+    <!-- Primary Actions -->
+    @if (!isGameActive) {
+      <button 
+        type="button" 
+        class="btn-primary w-full mt-4" 
+        [disabled]="isSubmitting || betAmount <= 0" 
+        (click)="onStartGame()"
+      >
+        Start Game
+      </button>
+    } @else {
+      <button 
+        type="button" 
+        class="btn-green w-full mt-4" 
+        [disabled]="isSubmitting || !hasRevealedGems" 
+        (click)="onCashOut()"
+      >
+        Cash Out
+      </button>
+    }
+  </div>
+
+  <!-- Right Side: Game Grid -->
+  <div class="board-panel glass-panel">
+    
+    <!-- 5x5 Grid Board -->
+    <div class="mines-grid" [ngClass]="{ 'grid-disabled': !isGameActive }">
+      @for (cell of cells; track cell.index) {
+        <div 
+          class="mines-tile" 
+          [ngClass]="{
+            'tile-unrevealed': cell.status === 'unrevealed',
+            'tile-gem': cell.status === 'gem',
+            'tile-mine': cell.status === 'mine',
+            'tile-mine-unhit': cell.status === 'mine-unhit',
+            'tile-shaking': cell.status === 'mine',
+            'tile-loading': cell.isRevealing
+          }"
+          (click)="onCellClick(cell)"
+        >
+          <!-- Tile Content -->
+          @if (cell.isRevealing) {
+            <div class="tile-spinner"></div>
+          } @else if (cell.status === 'gem') {
+            <!-- Diamond Gem SVG -->
+            <svg class="tile-svg gem-svg shimmer" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L2 12h20L12 2zM2 12l10 10 10-10H2z" />
+              <polygon points="12,4 5,12 12,20 19,12" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1"/>
+            </svg>
+          } @else if (cell.status === 'mine' || cell.status === 'mine-unhit') {
+            <!-- Exploding Mine SVG -->
+            <svg class="tile-svg mine-svg" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="7" />
+              <line x1="12" y1="2" x2="12" y2="22" stroke="currentColor" stroke-width="2"/>
+              <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/>
+              <line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"/>
+              <line x1="5" y1="19" x2="19" y2="5" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="12" r="3" fill="#000"/>
+            </svg>
+          } @else {
+            <span class="tile-dot"></span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Provably Fair Panel -->
+    @if (serverSeedHash) {
+      <div class="fairness-panel glass-panel mt-4">
+        <h3>Provably Fair Logs</h3>
+        
+        <div class="fairness-row font-mono">
+          <span class="label">Server Seed Hash (SHA256):</span>
+          <span class="val" title="{{ serverSeedHash }}">{{ serverSeedHash }}</span>
+        </div>
+        
+        @if (serverSeed) {
+          <div class="fairness-row font-mono">
+            <span class="label">Plain Server Seed (Revealed):</span>
+            <span class="val" title="{{ serverSeed }}">{{ serverSeed }}</span>
+          </div>
+        } @else {
+          <div class="fairness-row font-mono">
+            <span class="label">Plain Server Seed:</span>
+            <span class="val text-muted italic">Hidden until game ends</span>
+          </div>
+        }
+
+        <div class="fairness-row font-mono">
+          <span class="label">Client Seed:</span>
+          <span class="val">{{ clientSeed }}</span>
+        </div>
+
+        <div class="fairness-row font-mono">
+          <span class="label">Nonce:</span>
+          <span class="val">{{ nonce }}</span>
+        </div>
+
+        @if (serverSeed) {
+          <p class="verification-note mt-2">
+            Verify this outcome by copying the seeds into the verifier on your <a routerLink="/dashboard" class="text-cyan">Dashboard</a>.
+          </p>
+        }
+      </div>
+    }
+  </div>
+
+</div>

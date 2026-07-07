@@ -1,0 +1,187 @@
+<div class="game-container">
+  
+  <!-- Left Side: Controls -->
+  <div class="control-panel glass-panel">
+    <h2 class="panel-title">Dice Roll</h2>
+
+    <!-- Bet Amount -->
+    <div class="form-group">
+      <label class="form-label">Bet Amount</label>
+      <div class="bet-input-wrapper">
+        <input 
+          type="number" 
+          class="form-input bet-input" 
+          min="0.01" 
+          step="any"
+          [(ngModel)]="betAmount" 
+          [disabled]="isRolling"
+        />
+        <div class="bet-adjusters">
+          <button type="button" class="btn-adjust" (click)="adjustBet('half')" [disabled]="isRolling">½</button>
+          <button type="button" class="btn-adjust" (click)="adjustBet('double')" [disabled]="isRolling">2x</button>
+          <button type="button" class="btn-adjust" (click)="adjustBet('max')" [disabled]="isRolling">Max</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toggle Condition -->
+    <div class="form-group">
+      <label class="form-label">Roll Direction</label>
+      <button type="button" class="btn-secondary w-full d-flex align-items-center justify-content-between" (click)="toggleCondition()" [disabled]="isRolling">
+        <span>Roll {{ condition | uppercase }}</span>
+        <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="17 8 12 13 7 8"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Target Value input -->
+    <div class="form-group">
+      <label class="form-label">Target Number</label>
+      <input 
+        type="number" 
+        class="form-input" 
+        [(ngModel)]="target" 
+        (input)="recalculateOdds()" 
+        min="1" 
+        max="99" 
+        step="0.01"
+        [disabled]="isRolling"
+      />
+    </div>
+
+    <!-- Client Seed -->
+    <div class="form-group">
+      <label class="form-label">Client Seed</label>
+      <input 
+        type="text" 
+        class="form-input font-mono" 
+        [(ngModel)]="clientSeed" 
+        [disabled]="isRolling"
+      />
+    </div>
+
+    <!-- Error Message -->
+    @if (errorMessage) {
+      <div class="alert-box alert-error">
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    <!-- Roll Button -->
+    <button 
+      type="button" 
+      class="btn-primary w-full mt-4" 
+      [disabled]="isRolling || betAmount <= 0" 
+      (click)="onRoll()"
+    >
+      @if (isRolling) {
+        Rolling...
+      } @else {
+        Place Bet
+      }
+    </button>
+  </div>
+
+  <!-- Right Side: Game Arena -->
+  <div class="board-panel glass-panel">
+    
+    <!-- Big Roll Value Gauge -->
+    <div class="roll-gauge-container">
+      <div class="roll-gauge-outer" [ngClass]="{
+        'cyan-glow': isRolling,
+        'green-glow': rollResult !== null && lastResult?.won,
+        'red-glow': rollResult !== null && !lastResult?.won
+      }">
+        <div class="roll-value" [ngClass]="{
+          'text-white': isRolling,
+          'text-green': rollResult !== null && lastResult?.won,
+          'text-red': rollResult !== null && !lastResult?.won
+        }">
+          {{ displayedRoll | number:'1.2-2' }}
+        </div>
+        <div class="gauge-label">
+          @if (isRolling) {
+            Rolling...
+          } @else if (rollResult !== null) {
+            {{ lastResult?.won ? 'WINNER!' : 'LOST' }}
+          } @else {
+            PREDICT ROLL
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Odds Slider -->
+    <div class="slider-wrapper mt-4">
+      <input 
+        type="range" 
+        min="1" 
+        max="99" 
+        step="0.01" 
+        class="dice-slider" 
+        [(ngModel)]="target"
+        (input)="recalculateOdds()"
+        [style.background]="getSliderBackground()"
+        [disabled]="isRolling"
+      />
+      <div class="slider-endpoints font-mono">
+        <span>1.00</span>
+        <span class="target-indicator">Target: {{ target | number:'1.2-2' }}</span>
+        <span>99.00</span>
+      </div>
+    </div>
+
+    <!-- Calculated Odds Info Grid -->
+    <div class="odds-info-grid mt-4">
+      <div class="odds-card glass-panel">
+        <span class="label">Multiplier</span>
+        <strong class="value text-cyan">x{{ multiplier | number:'1.4-4' }}</strong>
+      </div>
+      
+      <div class="odds-card glass-panel">
+        <span class="label">Win Chance</span>
+        <strong class="value">{{ winChance | number:'1.2-2' }}%</strong>
+      </div>
+
+      <div class="odds-card glass-panel">
+        <span class="label">Est. Payout</span>
+        <strong class="value" [ngClass]="{'text-green': betAmount > 0}">
+          {{ (betAmount * multiplier) | number:'1.2-2' }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- Provably Fair Panel -->
+    @if (lastResult) {
+      <div class="fairness-panel glass-panel mt-4">
+        <h3>Provably Fair Verification</h3>
+        
+        <div class="fairness-row font-mono">
+          <span class="label">Server Seed Hash (SHA256):</span>
+          <span class="val" title="{{ lastResult.serverSeedHash }}">{{ lastResult.serverSeedHash }}</span>
+        </div>
+        
+        <div class="fairness-row font-mono">
+          <span class="label">Plain Server Seed (Revealed):</span>
+          <span class="val" title="{{ lastResult.serverSeed }}">{{ lastResult.serverSeed }}</span>
+        </div>
+
+        <div class="fairness-row font-mono">
+          <span class="label">Client Seed:</span>
+          <span class="val">{{ lastResult.clientSeed }}</span>
+        </div>
+
+        <div class="fairness-row font-mono">
+          <span class="label">Nonce:</span>
+          <span class="val">{{ lastResult.nonce }}</span>
+        </div>
+        
+        <p class="verification-note mt-2">
+          Verify this outcome by copying the seeds into the verifier on your <a routerLink="/dashboard" class="text-cyan">Dashboard</a>.
+        </p>
+      </div>
+    }
+  </div>
+
+</div>

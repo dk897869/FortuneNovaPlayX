@@ -1,0 +1,175 @@
+.leaderboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  width: 100%;
+}
+
+.leaderboard-panel {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 12px;
+
+  h2 {
+    font-size: 1.35rem;
+    color: var(--text-primary);
+  }
+
+  .badge-count {
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+}
+
+.header-icon {
+  width: 24px;
+  height: 24px;
+  
+  &.icon-yellow {
+    color: #fbbf24;
+    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.4));
+  }
+
+  &.icon-cyan {
+    color: var(--primary-cyan);
+    filter: drop-shadow(0 0 4px var(--primary-cyan-glow));
+  }
+}
+
+// --- Leader Items List ---
+.leader-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.leader-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.4);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateX(4px);
+    background: rgba(30, 41, 59, 0.6);
+  }
+
+  .rank-badge {
+    width: 36px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  .player-details {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+
+    .player-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+  }
+
+  .player-balance {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    
+    .coin-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+  }
+}
+
+// --- Rank Podiums Style ---
+.rank-first {
+  background: rgba(251, 191, 36, 0.05);
+  border-color: rgba(251, 191, 36, 0.25);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.05);
+
+  .player-name {
+    color: #fbbf24 !important;
+  }
+}
+
+.rank-second {
+  background: rgba(148, 163, 184, 0.05);
+  border-color: rgba(148, 163, 184, 0.25);
+  box-shadow: 0 0 15px rgba(148, 163, 184, 0.05);
+
+  .player-name {
+    color: #cbd5e1 !important;
+  }
+}
+
+.rank-third {
+  background: rgba(180, 83, 9, 0.05);
+  border-color: rgba(180, 83, 9, 0.25);
+  box-shadow: 0 0 15px rgba(180, 83, 9, 0.05);
+
+  .player-name {
+    color: #f97316 !important;
+  }
+}
+
+.rank-win-top {
+  border-color: rgba(6, 182, 212, 0.15);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.03);
+}
+
+// --- Game tag badges ---
+.game-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+
+  &.badge-dice {
+    background: rgba(6, 182, 212, 0.1);
+    color: #22d3ee;
+  }
+
+  &.badge-mines {
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+  }
+}
+
+.text-green {
+  color: var(--primary-green) !important;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .leaderboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

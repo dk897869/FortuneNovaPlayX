@@ -1,0 +1,354 @@
+<div class="dashboard-grid">
+  
+  <!-- Welcome and Action Banner -->
+  <div class="banner-panel glass-panel">
+    <div class="banner-content">
+      <h1 class="welcome-title flex-row items-center gap-2" style="display: flex; align-items: center; gap: 8px;">
+        <span class="avatar-welcome-emoji" style="font-size: 2.2rem; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));">
+          @if (authService.currentUser()?.avatar === 'avatar-ninja') { 🥷 }
+          @else if (authService.currentUser()?.avatar === 'avatar-surfer') { 🏄 }
+          @else if (authService.currentUser()?.avatar === 'avatar-king') { 👑 }
+          @else if (authService.currentUser()?.avatar === 'avatar-queen') { 👸 }
+          @else if (authService.currentUser()?.avatar === 'avatar-diamond') { 💎 }
+          @else if (authService.currentUser()?.avatar === 'avatar-champion') { 🏆 }
+          @else { 👤 }
+        </span>
+        Welcome back, <span class="text-cyan">{{ (authService.currentUser()?.email || '').split('@')[0] || 'Player' }}</span>
+        <button type="button" class="btn-adjust btn-settings-gear ml-4" (click)="openProfileEditor()" title="Edit Profile & Security" style="margin-left: 16px; font-size: 0.85rem; padding: 6px 12px; display: flex; align-items: center; gap: 4px;">⚙️ Settings</button>
+      </h1>
+      <p class="welcome-subtitle">Seeded with 1,000 free Game Coins. Ready to test your strategy?</p>
+      
+      <div class="game-quick-links mt-4">
+        <a routerLink="/dice" class="game-card glass-panel glass-panel-hover">
+          <div class="game-icon-wrapper cyan-glow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+              <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/>
+              <circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/>
+              <circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/>
+              <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="game-details">
+            <h3>Dice Arena</h3>
+            <p>Predict rolls, modify odds, and claim multipliers.</p>
+          </div>
+        </a>
+
+        <a routerLink="/mines" class="game-card glass-panel glass-panel-hover">
+          <div class="game-icon-wrapper green-glow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <path d="M21 12H3M12 3v18"/>
+            </svg>
+          </div>
+          <div class="game-details">
+            <h3>Mines Grid</h3>
+            <p>Dodge dynamic explosives and cash out safely.</p>
+          </div>
+        </a>
+
+        <a routerLink="/fruit-ninja" class="game-card glass-panel glass-panel-hover">
+          <div class="game-icon-wrapper red-glow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 22h20L12 2z"/>
+            </svg>
+          </div>
+          <div class="game-details">
+            <h3>Fruit Ninja</h3>
+            <p>Slice flying fruits and dodge hidden bombs.</p>
+          </div>
+        </a>
+
+        <a routerLink="/ludo" class="game-card glass-panel glass-panel-hover">
+          <div class="game-icon-wrapper yellow-glow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 2v20M2 12h20"/>
+            </svg>
+          </div>
+          <div class="game-details">
+            <h3>Ludo Quick Run</h3>
+            <p>Roll dice to reach home, dodging danger capture zones.</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Left: Transaction History Ledger -->
+  <div class="ledger-panel glass-panel">
+    <div class="panel-header">
+      <h2>Transaction History</h2>
+      <span class="badge-count">{{ totalCount }} total entries</span>
+    </div>
+
+    @if (history.length === 0) {
+      <div class="empty-state">
+        <p>No transaction history recorded yet. Place a bet to start!</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Context</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Resulting Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of history; track entry._id) {
+              <tr class="ledger-row">
+                <td class="col-time">{{ entry.timestamp | date:'MMM d, HH:mm:ss' }}</td>
+                <td class="col-game">
+                  <span class="game-badge" [ngClass]="'badge-' + entry.game">
+                    {{ entry.game === 'signup_reward' ? 'Signup Reward' : (entry.game | titlecase) }}
+                  </span>
+                </td>
+                <td class="col-type text-capitalize">{{ entry.type }}</td>
+                <td class="col-amount" [ngClass]="entry.amount >= 0 ? 'text-green' : 'text-red'">
+                  {{ entry.amount >= 0 ? '+' : '' }}{{ entry.amount | number:'1.2-2' }}
+                </td>
+                <td class="col-balance font-mono">{{ entry.resultingBalance | number:'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination controls -->
+      <div class="pagination-controls">
+        <button (click)="prevPage()" [disabled]="currentPage === 1" class="btn-pagination">
+          &larr; Prev
+        </button>
+        <span class="page-indicator">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="btn-pagination">
+          Next &rarr;
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Right: Provably Fair Verifier Panel -->
+  <div class="verifier-panel glass-panel">
+    <div class="panel-header">
+      <h2>Provably Fair Verifier</h2>
+    </div>
+    
+    <p class="panel-intro">
+      Verify any historical bet outcome. Paste the unhashed plaintext server seed, your client seed, and the nonce.
+    </p>
+
+    <form (submit)="onVerifyOutcome()" class="verifier-form">
+      <div class="form-group">
+        <label class="form-label">Server Seed (Unhashed Hex)</label>
+        <input 
+          type="text" 
+          class="form-input font-mono" 
+          placeholder="e.g. 5d9f041b6..." 
+          [(ngModel)]="verifierServerSeed" 
+          name="srvSeed" 
+          required
+        />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label class="form-label">Client Seed</label>
+          <input 
+            type="text" 
+            class="form-input" 
+            placeholder="e.g. my_custom_seed" 
+            [(ngModel)]="verifierClientSeed" 
+            name="cliSeed" 
+            required
+          />
+        </div>
+
+        <div class="form-group w-30">
+          <label class="form-label">Nonce</label>
+          <input 
+            type="number" 
+            class="form-input font-mono" 
+            min="1" 
+            [(ngModel)]="verifierNonce" 
+            name="nonce" 
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-row align-end">
+        <div class="form-group flex-1">
+          <label class="form-label">Game Mode</label>
+          <select class="form-input select-mode" [(ngModel)]="verifierGameType" name="gameType">
+            <option value="dice">Dice Roll</option>
+            <option value="mines">Mines Grid</option>
+            <option value="ludo">Ludo Roll</option>
+          </select>
+        </div>
+
+        @if (verifierGameType === 'mines') {
+          <div class="form-group w-40">
+            <label class="form-label">Mines Count</label>
+            <input 
+              type="number" 
+              class="form-input" 
+              min="1" 
+              max="24" 
+              [(ngModel)]="verifierMineCount" 
+              name="minesCount" 
+              required
+            />
+          </div>
+        }
+      </div>
+
+      <button type="submit" class="btn-primary w-full mt-2">
+        Recalculate Outcome
+      </button>
+    </form>
+
+    <!-- Error state -->
+    @if (verifierError) {
+      <div class="alert-box alert-error mt-4">
+        <span>{{ verifierError }}</span>
+      </div>
+    }
+
+    <!-- Output results -->
+    @if (verifierResult) {
+      <div class="verifier-result-box glass-panel mt-4">
+        <h3 class="result-title">{{ verifierResult.game }} Outcome</h3>
+        
+        <div class="result-row font-mono">
+          <span class="label">Server Hash (SHA256):</span>
+          <span class="val" title="{{ verifierResult.serverSeedHash }}">{{ verifierResult.serverSeedHash }}</span>
+        </div>
+        
+        <div class="result-row font-mono">
+          <span class="label">HMAC Signature:</span>
+          <span class="val" title="{{ verifierResult.hmacSignature }}">{{ verifierResult.hmacSignature }}</span>
+        </div>
+
+        <div class="result-outcome">
+          <strong>Result:</strong> {{ verifierResult.outcome }}
+        </div>
+
+        <!-- 5x5 Mine Grid preview if verifying Mines -->
+        @if (verifierResult.minePositions) {
+          <div class="verifier-grid mt-3">
+            @for (cell of [].constructor(25); track idx; let idx = $index) {
+              <div class="verifier-cell" [ngClass]="{ 'cell-mine': isMineInCell(idx) }">
+                @if (isMineInCell(idx)) {
+                  <svg viewBox="0 0 24 24" class="verifier-mine-icon">
+                    <circle cx="12" cy="12" r="8" fill="currentColor"/>
+                    <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                } @else {
+                  <span class="safe-dot"></span>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+</div>
+
+<!-- PROFILE EDIT MODAL -->
+@if (isEditingProfile) {
+  <div class="modal-overlay">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3>Edit Profile & Security</h3>
+        <button type="button" class="btn-close" (click)="isEditingProfile = false">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Section 1: Profile Details -->
+        <div class="profile-section">
+          <h4>Account Details</h4>
+          @if (profileError) {
+            <div class="alert-box alert-error mt-2"><span>{{ profileError }}</span></div>
+          }
+          @if (profileSuccess) {
+            <div class="alert-box alert-success mt-2"><span>{{ profileSuccess }}</span></div>
+          }
+          <form (ngSubmit)="onUpdateProfile()" class="settings-form mt-2">
+            <div class="form-group">
+              <label class="form-label">Email ID</label>
+              <input type="email" class="form-input" [(ngModel)]="profileEmail" name="email" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mobile Number</label>
+              <input type="tel" class="form-input" [(ngModel)]="profilePhone" name="phone" placeholder="+1234567890" />
+            </div>
+
+            <!-- Avatar selector grid -->
+            <div class="form-group">
+              <label class="form-label">Select Profile Picture (Avatar)</label>
+              <div class="avatar-grid" style="display: flex; gap: 10px; margin-top: 8px;">
+                @for (av of avatars; track av) {
+                  <button 
+                    type="button" 
+                    class="btn-avatar-choice" 
+                    [ngClass]="{ 'active-avatar': profileAvatar === av }"
+                    (click)="profileAvatar = av"
+                    style="font-size: 1.8rem; background: rgba(255,255,255,0.05); border: 2px solid transparent; border-radius: 50%; padding: 8px; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+                  >
+                    <span class="avatar-emoji">
+                      @if (av === 'avatar-ninja') { 🥷 }
+                      @else if (av === 'avatar-surfer') { 🏄 }
+                      @else if (av === 'avatar-king') { 👑 }
+                      @else if (av === 'avatar-queen') { 👸 }
+                      @else if (av === 'avatar-diamond') { 💎 }
+                      @else if (av === 'avatar-champion') { 🏆 }
+                    </span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary w-full mt-4">Save Profile Details</button>
+          </form>
+        </div>
+
+        <hr class="section-divider" style="margin: 24px 0; border: none; border-top: 1px solid rgba(255, 255, 255, 0.08);" />
+
+        <!-- Section 2: Change Password -->
+        <div class="profile-section">
+          <h4>Change Password</h4>
+          @if (passwordError) {
+            <div class="alert-box alert-error mt-2"><span>{{ passwordError }}</span></div>
+          }
+          @if (passwordSuccess) {
+            <div class="alert-box alert-success mt-2"><span>{{ passwordSuccess }}</span></div>
+          }
+          <form (ngSubmit)="onChangePassword()" class="settings-form mt-2">
+            <div class="form-group">
+              <label class="form-label">Current Password</label>
+              <input type="password" class="form-input" [(ngModel)]="oldPassword" name="oldPassword" placeholder="••••••••" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <input type="password" class="form-input" [(ngModel)]="newPassword" name="newPassword" placeholder="••••••••" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm New Password</label>
+              <input type="password" class="form-input" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="••••••••" required />
+            </div>
+
+            <button type="submit" class="btn-green w-full mt-4">Change Password</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+}
