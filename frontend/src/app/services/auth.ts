@@ -2,6 +2,7 @@ import { Injectable, signal, WritableSignal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface User {
   id: string;
@@ -22,7 +23,7 @@ export interface AuthResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly apiUrl = 'http://localhost:5000/api';
+  private readonly apiUrl = environment.apiUrl;
   public readonly currentUser: WritableSignal<User | null> = signal<User | null>(null);
   public readonly showSettingsModal = signal<boolean>(false);
   public readonly showWalletModal = signal<{ active: boolean; type: 'deposit' | 'withdraw' }>({ active: false, type: 'deposit' });

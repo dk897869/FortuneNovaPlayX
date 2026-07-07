@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth';
 
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 declare var google: any;
 
@@ -240,7 +241,7 @@ export class Auth implements AfterViewInit {
     this.successMessage = 'Verifying your email... Please wait.';
     this.errorMessage = '';
     
-    this.http.get<any>(`http://localhost:5000/api/auth/verify-email?token=${token}`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/auth/verify-email?token=${token}`).subscribe({
       next: (res) => {
         this.successMessage = 'Email verified successfully! You have successfully onboarded and your bonus is active. Please log in.';
         this.isRegister = false;
@@ -268,7 +269,7 @@ export class Auth implements AfterViewInit {
       return;
     }
     this.isSubmitting = true;
-    this.http.post<any>('http://localhost:5000/api/auth/login-otp-request', { email: this.email }).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/auth/login-otp-request`, { email: this.email }).subscribe({
       next: (res) => {
         this.isSubmitting = false;
         this.successMessage = 'Verification OTP sent to your email!';
@@ -290,7 +291,7 @@ export class Auth implements AfterViewInit {
       return;
     }
     this.isSubmitting = true;
-    this.http.post<any>('http://localhost:5000/api/auth/login-otp-verify', { email: this.email, code: this.otpCode }).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/auth/login-otp-verify`, { email: this.email, code: this.otpCode }).subscribe({
       next: (res) => {
         this.isSubmitting = false;
         this.successMessage = 'Login successful!';

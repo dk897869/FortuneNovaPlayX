@@ -877,4 +877,21 @@ body {
   }
 }
 
+// HUD Logout Hover Override
+.btn-icon-hud:has(.logout-icon) {
+  &:hover {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #ef4444 !important;
+  }
+}
 
+// Profile Photo Uploader
+.avatar-preview-circle {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.4) !important;
+  }
+}

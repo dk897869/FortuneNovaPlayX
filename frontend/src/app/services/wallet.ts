@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { AuthService } from './auth';
+import { environment } from '../../environments/environment';
 
 export interface LedgerEntry {
   _id: string;
   userId: string;
   amount: number;
   type: 'bet' | 'win' | 'reward' | 'cashout';
-  game: 'dice' | 'mines' | 'signup_reward';
+  game: string;
   resultingBalance: number;
   timestamp: string;
 }
@@ -31,7 +32,7 @@ export interface LeaderboardResponse {
   providedIn: 'root'
 })
 export class WalletService {
-  private readonly apiUrl = 'http://localhost:5000/api';
+  private readonly apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 

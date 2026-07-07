@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { AuthService } from './auth';
+import { environment } from '../../environments/environment';
 
 export interface DiceRollResponse {
   roll: number;

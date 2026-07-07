@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from './services/auth';
 import { LoaderService } from './services/loader';
 import { WalletService, LedgerEntry } from './services/wallet';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -112,7 +113,7 @@ export class App implements OnInit, OnDestroy {
     this.profileSuccess = '';
     this.profileError = '';
     
-    this.http.post<any>('http://localhost:5000/api/user/update', {
+    this.http.post<any>(`${environment.apiUrl}/user/update`, {
       email: this.profileEmail,
       phone: this.profilePhone,
       avatar: this.profileAvatar
@@ -136,7 +137,7 @@ export class App implements OnInit, OnDestroy {
       return;
     }
     
-    this.http.post<any>('http://localhost:5000/api/user/change-password', {
+    this.http.post<any>(`${environment.apiUrl}/user/change-password`, {
       oldPassword: this.oldPassword,
       newPassword: this.newPassword
     }, { headers: this.authService.getHeaders() }).subscribe({
@@ -157,7 +158,7 @@ export class App implements OnInit, OnDestroy {
       return;
     }
     
-    this.http.post<any>('http://localhost:5000/api/user/delete', {}, { headers: this.authService.getHeaders() }).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/user/delete`, {}, { headers: this.authService.getHeaders() }).subscribe({
       next: (res) => {
         alert(res.message);
         this.isEditingProfile = false;
@@ -367,6 +368,83 @@ export class App implements OnInit, OnDestroy {
       alert(`Invite Link copied successfully!\nShare this link to earn 2,000 Coins bonus:\n\n${link}`);
     }).catch(err => {
       alert(`Your Invite Link:\n\n${link}`);
+    });
+  }
+
+  protected onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    this.profileSuccess = 'Compressing image... Please wait.';
+    this.profileError = '';
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const originalBase64 = e.target.result;
+      this.compressImage(originalBase64, 10, 50).then(compressed => {
+        this.profileAvatar = compressed;
+        const sizeKb = (compressed.length * 3) / 4 / 1024;
+        this.profileSuccess = `Photo uploaded and compressed successfully to ${sizeKb.toFixed(1)} KB!`;
+        this.profileError = '';
+      }).catch(err => {
+        this.profileError = 'Failed to compress image. Please try another photo.';
+        this.profileSuccess = '';
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  private compressImage(dataUrl: string, minKb = 10, maxKb = 50): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 200;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+
+        let quality = 0.7;
+        let resultBase64 = canvas.toDataURL('image/jpeg', quality);
+        let sizeKb = (resultBase64.length * 3) / 4 / 1024;
+
+        if (sizeKb > maxKb) {
+          for (let q = 0.6; q >= 0.1; q -= 0.1) {
+            const testBase64 = canvas.toDataURL('image/jpeg', q);
+            const testSize = (testBase64.length * 3) / 4 / 1024;
+            if (testSize <= maxKb) {
+              resultBase64 = testBase64;
+              sizeKb = testSize;
+              break;
+            }
+          }
+        } else if (sizeKb < minKb) {
+          resultBase64 = canvas.toDataURL('image/jpeg', 0.95);
+        }
+
+        resolve(resultBase64);
+      };
+      img.onerror = () => {
+        reject(new Error('Failed to load image'));
+      };
+      img.src = dataUrl;
     });
   }
 }
