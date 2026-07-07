@@ -16,18 +16,7 @@ const crypto = require('crypto');
 function isGenuineEmail(email) {
   if (!email) return false;
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!re.test(email)) return false;
-  
-  const domain = email.split('@')[1].toLowerCase();
-  
-  // List of standard fake/unusual domains to ignore
-  const fakeDomains = ['example.com', 'test.com', 'localhost', 'tempmail.com', 'mailinator.com', 'trashmail.com', 'fake.com', 'invalid.com'];
-  if (fakeDomains.includes(domain)) return false;
-  
-  // Ignore mock prefixes
-  if (email.startsWith('mock_') || email.startsWith('test_')) return false;
-  
-  return true;
+  return re.test(email);
 }
 
 async function sendEmail(to, subject, text, html) {
