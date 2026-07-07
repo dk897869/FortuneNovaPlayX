@@ -43,14 +43,23 @@ async function sendEmail(to, subject, text, html) {
 
   if (process.env.SMTP_HOST && process.env.SMTP_USER) {
     try {
-      const transporter = nodemailer.createTransport({
+      const transporterOptions = {
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_PORT === '465',
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS
         }
-      });
+      };
+
+      if (process.env.SMTP_HOST.includes('gmail.com')) {
+        delete transporterOptions.host;
+        delete transporterOptions.port;
+        transporterOptions.service = 'gmail';
+      }
+
+      const transporter = nodemailer.createTransport(transporterOptions);
 
       await transporter.sendMail({
         from: process.env.SMTP_FROM || 'noreply@fortuneplayx.local',
@@ -217,14 +226,16 @@ exports.register = async (req, res) => {
         </p>
       </div>
     `;
-    await sendEmail(user.email, 'Verify Your Email - FortuneNovaPlayX', mailText, mailHtml);
+    sendEmail(user.email, 'Verify Your Email - FortuneNovaPlayX', mailText, mailHtml)
+      .catch(err => console.error('Register email send failure:', err));
 
     console.log(`\n========================================`);
     console.log(`[VERIFICATION LINK DISPATCHED]`);
     console.log(`Verify URL: ${verifyLink}`);
     console.log(`========================================\n`);
 
-    await sendOTP(user, otpCode);
+    sendOTP(user, otpCode)
+      .catch(err => console.error('Register OTP send failure:', err));
 
     const token = generateToken(user._id);
 
@@ -336,7 +347,7 @@ exports.resendOtp = async (req, res) => {
     user.otp.expiresAt = otpExpiry;
     await user.save();
 
-    await sendOTP(user, otpCode);
+    sendOTP(user, otpCode).catch(err => console.error("Async sendOTP error:", err));
 
     res.json({ success: true, message: 'OTP code re-sent successfully.' });
   } catch (error) {
@@ -537,7 +548,7 @@ exports.loginOtpRequest = async (req, res) => {
     user.otp.expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     await user.save();
 
-    await sendOTP(user, otpCode);
+    sendOTP(user, otpCode).catch(err => console.error("Async sendOTP error:", err));
 
     res.json({ message: 'Verification OTP sent successfully to your email.' });
   } catch (error) {
