@@ -44,9 +44,26 @@ const UserSchema = new mongoose.Schema({
   verificationToken: {
     type: String,
     default: null
+  },
+  referralCode: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   }
 }, {
   timestamps: true
+});
+
+UserSchema.pre('save', function(next) {
+  if (!this.referralCode) {
+    this.referralCode = 'REF-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+  next();
 });
 
 module.exports = mongoose.model('User', UserSchema);

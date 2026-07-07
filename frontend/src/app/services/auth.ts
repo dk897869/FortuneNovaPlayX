@@ -10,6 +10,7 @@ export interface User {
   balance: number;
   otpVerified: boolean;
   avatar?: string;
+  referralCode?: string;
 }
 
 export interface AuthResponse {
@@ -23,6 +24,8 @@ export interface AuthResponse {
 export class AuthService {
   private readonly apiUrl = 'http://localhost:5000/api';
   public readonly currentUser: WritableSignal<User | null> = signal<User | null>(null);
+  public readonly showSettingsModal = signal<boolean>(false);
+  public readonly showWalletModal = signal<{ active: boolean; type: 'deposit' | 'withdraw' }>({ active: false, type: 'deposit' });
 
   constructor(private http: HttpClient) {
     this.loadUserFromStorage();
@@ -48,8 +51,8 @@ export class AuthService {
     });
   }
 
-  public register(email: string, password: string, phone?: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, { email, password, phone }).pipe(
+  public register(email: string, password: string, phone?: string, ref?: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, { email, password, phone, ref }).pipe(
       tap(res => this.handleAuthSuccess(res))
     );
   }
@@ -60,7 +63,7 @@ export class AuthService {
     );
   }
 
-  public socialLogin(socialData: { email: string; name: string; id: string; provider: string; token: string }): Observable<AuthResponse> {
+  public socialLogin(socialData: { email: string; name: string; id: string; provider: string; token: string; isSignup?: boolean; ref?: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/social-login`, socialData).pipe(
       tap(res => this.handleAuthSuccess(res))
     );

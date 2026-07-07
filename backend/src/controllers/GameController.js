@@ -305,7 +305,7 @@ exports.cashoutMines = async (req, res) => {
   }
 };
 
-// Start Ludo (Casino Quick Run)
+// Ludo Match Entry Bet (POST /api/games/ludo/bet)
 exports.startLudo = async (req, res) => {
   try {
     const { betAmount, clientSeed: customClientSeed } = req.body;
@@ -344,8 +344,6 @@ exports.startLudo = async (req, res) => {
       status: 'active',
       betAmount: bet,
       state: {
-        position: 0,
-        currentMultiplier: 1.00,
         rolls: []
       },
       serverSeed,
@@ -361,143 +359,64 @@ exports.startLudo = async (req, res) => {
       serverSeedHash,
       nonce,
       betAmount: bet,
-      newBalance,
-      position: 0,
-      currentMultiplier: 1.00
+      newBalance
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Roll Die in Ludo
+// Ludo Provably Fair Roll (POST /api/games/ludo/roll-dice)
 exports.rollLudo = async (req, res) => {
   try {
-    const { gameId } = req.body;
+    const { gameId, rollIndex } = req.body;
     const gameState = await GameState.findOne({ _id: gameId, userId: req.user._id, status: 'active' });
 
     if (!gameState) {
       return res.status(404).json({ error: 'No active Ludo game found.' });
     }
 
-    const userId = req.user._id;
-    // We increment step nonce by the length of rolls taken in this round to keep every roll distinct and provably fair
-    const rollNonce = gameState.nonce * 100 + gameState.state.rolls.length;
+    const index = parseInt(rollIndex || '0');
     
     // Provably fair roll calculation
     const crypto = require('crypto');
     const hmac = crypto.createHmac('sha256', gameState.serverSeed);
-    hmac.update(`${gameState.clientSeed}-${rollNonce}`);
+    hmac.update(`${gameState.clientSeed}-${gameState.nonce}-${index}`);
     const hash = hmac.digest('hex');
     const subHash = hash.substring(0, 8);
     const val = parseInt(subHash, 16);
     
     const roll = (val % 6) + 1; // 1 to 6
-    const oldPosition = gameState.state.position;
-    let newPosition = oldPosition + roll;
-    
-    let isCompleted = false;
-    let hitDanger = false;
-    let currentMultiplier = gameState.state.currentMultiplier;
-    let message = `You rolled a ${roll} and moved to cell ${newPosition}.`;
 
-    if (newPosition >= 15) {
-      newPosition = 15;
-      isCompleted = true;
-      currentMultiplier = 8.00; // 8x payout for reaching home
-      message = `Home Run! You reached the center home tile and won x${currentMultiplier}!`;
-    } else {
-      // Check tile types
-      if (newPosition === 6) {
-        // Danger zone 1 (35% risk)
-        const riskVal = val % 100;
-        if (riskVal < 35) {
-          isCompleted = true;
-          hitDanger = true;
-          currentMultiplier = 0;
-          message = `Captured! Opponent token cut you at cell 6. Better luck next time!`;
-        } else {
-          currentMultiplier = 1.80;
-          message = `Safe! You dodged the opponent at cell 6. Current Multiplier: x${currentMultiplier}`;
-        }
-      } else if (newPosition === 11) {
-        // Danger zone 2 (40% risk)
-        const riskVal = val % 100;
-        if (riskVal < 40) {
-          isCompleted = true;
-          hitDanger = true;
-          currentMultiplier = 0;
-          message = `Captured! Opponent token cut you at cell 11. Better luck next time!`;
-        } else {
-          currentMultiplier = 3.20;
-          message = `Safe! You dodged the opponent at cell 11. Current Multiplier: x${currentMultiplier}`;
-        }
-      } else if (newPosition === 3) {
-        currentMultiplier = 1.30; // Star tile
-        message = `Star safe zone! Landed on safe cell 3. Multiplier: x${currentMultiplier}`;
-      } else if (newPosition === 8) {
-        currentMultiplier = 2.20; // Star tile
-        message = `Star safe zone! Landed on safe cell 8. Multiplier: x${currentMultiplier}`;
-      } else if (newPosition === 13) {
-        currentMultiplier = 4.00; // Star tile
-        message = `Star safe zone! Landed on safe cell 13. Multiplier: x${currentMultiplier}`;
-      } else {
-        // Normal tile
-        currentMultiplier = Math.round((1.0 + newPosition * 0.1) * 100) / 100;
-      }
-    }
-
-    // Save history
-    gameState.state.rolls.push({ roll, from: oldPosition, to: newPosition, multiplier: currentMultiplier });
-    gameState.state.position = newPosition;
-    gameState.state.currentMultiplier = currentMultiplier;
-
-    let payout = 0;
-    let newBalance = req.user.balance;
-
-    if (isCompleted) {
-      gameState.status = 'completed';
-      if (!hitDanger && currentMultiplier > 0) {
-        // Won the whole board!
-        payout = Math.round(gameState.betAmount * currentMultiplier * 100) / 100;
-        newBalance = await WalletService.adjustBalance(userId, payout, 'win', 'ludo');
-      }
-    }
-
+    // Record roll
+    gameState.state.rolls.push(roll);
     await gameState.save();
 
     res.json({
       roll,
-      position: newPosition,
-      currentMultiplier,
-      isCompleted,
-      hitDanger,
-      message,
-      payout,
-      newBalance,
-      serverSeed: isCompleted ? gameState.serverSeed : undefined
+      rollIndex: index,
+      serverSeedHash: gameState.serverSeedHash
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Cashout Ludo
+// Ludo End Match Win Claim (POST /api/games/ludo/claim-win)
 exports.cashoutLudo = async (req, res) => {
   try {
-    const { gameId } = req.body;
+    const { gameId, playerCount } = req.body;
     const gameState = await GameState.findOne({ _id: gameId, userId: req.user._id, status: 'active' });
 
     if (!gameState) {
       return res.status(404).json({ error: 'No active Ludo game found.' });
     }
 
-    const currentMultiplier = gameState.state.currentMultiplier;
-
     gameState.status = 'completed';
     await gameState.save();
 
-    const payout = Math.round(gameState.betAmount * currentMultiplier * 100) / 100;
+    const multiplier = parseInt(playerCount) === 4 ? 3.60 : 1.90;
+    const payout = Math.round(gameState.betAmount * multiplier * 100) / 100;
     const newBalance = await WalletService.adjustBalance(req.user._id, payout, 'win', 'ludo');
 
     res.json({
@@ -505,7 +424,7 @@ exports.cashoutLudo = async (req, res) => {
       payout,
       newBalance,
       serverSeed: gameState.serverSeed,
-      finalMultiplier: currentMultiplier
+      multiplier
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -17,19 +17,23 @@ router.post('/auth/verify-otp', auth, AuthController.verifyOtp);
 router.post('/auth/resend-otp', auth, AuthController.resendOtp);
 router.post('/user/update', auth, AuthController.updateProfile);
 router.post('/user/change-password', auth, AuthController.changePassword);
+router.post('/user/delete', auth, AuthController.deleteProfile);
 
 // --- Wallet Routes ---
 router.get('/wallet/balance', auth, WalletController.getBalance);
 router.get('/wallet/history', auth, WalletController.getHistory);
 router.get('/wallet/leaderboard', auth, WalletController.getLeaderboard);
+router.post('/wallet/claim-daily', auth, WalletController.claimDailyBonus);
+router.post('/wallet/deposit', auth, WalletController.deposit);
+router.post('/wallet/withdraw', auth, WalletController.withdraw);
 
 // --- Game Routes ---
 router.post('/games/dice', auth, GameController.rollDice);
 router.post('/games/mines/start', auth, GameController.startMines);
 router.post('/games/mines/reveal', auth, GameController.revealCell);
 router.post('/games/mines/cashout', auth, GameController.cashoutMines);
-router.post('/games/ludo/start', auth, GameController.startLudo);
-router.post('/games/ludo/roll', auth, GameController.rollLudo);
-router.post('/games/ludo/cashout', auth, GameController.cashoutLudo);
+router.post('/games/ludo/bet', auth, GameController.startLudo);
+router.post('/games/ludo/roll-dice', auth, GameController.rollLudo);
+router.post('/games/ludo/claim-win', auth, GameController.cashoutLudo);
 
 module.exports = router;

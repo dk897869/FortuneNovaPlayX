@@ -19,7 +19,7 @@ const LedgerSchema = new mongoose.Schema({
   game: {
     type: String,
     required: true,
-    enum: ['dice', 'mines', 'signup_reward', 'ludo']
+    enum: ['dice', 'mines', 'signup_reward', 'ludo', 'deposit', 'withdrawal', 'daily_bonus', 'referral_reward']
   },
   resultingBalance: {
     type: Number,

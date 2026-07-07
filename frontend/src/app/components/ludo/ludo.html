@@ -1,226 +1,324 @@
-<div class="game-container">
-  
-  <!-- Left Side: Controls -->
-  <div class="control-panel glass-panel">
-    <h2 class="panel-title">Ludo Quick Run</h2>
+<div class="ludo-page-container">
 
-    <!-- Bet Amount -->
-    <div class="form-group">
-      <label class="form-label">Bet Amount</label>
-      <div class="bet-input-wrapper">
+  <!-- ================= LOBBY MODE ================= -->
+  @if (currentMode === 'LOBBY') {
+    <div class="lobby-card glass-panel text-center">
+      <h2 class="lobby-title">Ludo Classic Lounge</h2>
+      <p class="lobby-subtitle">Claim your throne in real-time multiplayer arenas</p>
+
+      <!-- 1. Color Selector -->
+      <div class="settings-section">
+        <label class="section-label">Select Your Color</label>
+        <div class="color-picker-grid">
+          @for (col of availableColors; track col) {
+            <button 
+              type="button" 
+              class="btn-color-choice color-{{ col }}" 
+              [ngClass]="{ 'selected-color': selectedColor === col }"
+              (click)="selectedColor = col"
+            >
+              @if (selectedColor === col) {
+                <span class="check-mark">✓</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- 2. Player Count -->
+      <div class="settings-section">
+        <label class="section-label">Select Players</label>
+        <div class="player-count-toggle">
+          <button 
+            type="button" 
+            class="btn-toggle" 
+            [ngClass]="{ 'active-toggle': selectedPlayerCount === 2 }"
+            (click)="selectedPlayerCount = 2"
+          >
+            2 Players (VS Bot)
+          </button>
+          <button 
+            type="button" 
+            class="btn-toggle" 
+            [ngClass]="{ 'active-toggle': selectedPlayerCount === 4 }"
+            (click)="selectedPlayerCount = 4"
+          >
+            4 Players (Battle Royale)
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. Bet Adjuster -->
+      <div class="settings-section">
+        <label class="section-label">Entry Fee Bet</label>
+        <div class="bet-entry-wrapper">
+          <input 
+            type="number" 
+            class="form-input bet-input text-center" 
+            min="10" 
+            step="10" 
+            [(ngModel)]="betAmount" 
+          />
+          <div class="payout-indicator mt-2">
+            Estimated Win Prize: 
+            <strong class="text-green">
+              {{ (betAmount * (selectedPlayerCount === 4 ? 3.60 : 1.90)) | number:'1.0-0' }} Coins
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Client Seed -->
+      <div class="settings-section">
+        <label class="section-label">Client Seed</label>
         <input 
-          type="number" 
-          class="form-input bet-input" 
-          min="0.01" 
-          step="any"
-          [(ngModel)]="betAmount" 
-          [disabled]="isGameActive"
+          type="text" 
+          class="form-input font-mono text-center" 
+          [(ngModel)]="clientSeed" 
         />
-        <div class="bet-adjusters">
-          <button type="button" class="btn-adjust" (click)="adjustBet('half')" [disabled]="isGameActive">½</button>
-          <button type="button" class="btn-adjust" (click)="adjustBet('double')" [disabled]="isGameActive">2x</button>
-          <button type="button" class="btn-adjust" (click)="adjustBet('max')" [disabled]="isGameActive">Max</button>
-        </div>
       </div>
-    </div>
 
-    <!-- Client Seed -->
-    <div class="form-group">
-      <label class="form-label">Client Seed</label>
-      <input 
-        type="text" 
-        class="form-input font-mono" 
-        [(ngModel)]="clientSeed" 
-        [disabled]="isGameActive"
-      />
-    </div>
-
-    <!-- Live Game Stats -->
-    @if (isGameActive) {
-      <div class="live-multiplier-box glass-panel">
-        <div class="stat-row">
-          <span class="label">Current Position</span>
-          <strong class="val">Cell {{ currentPosition }} / 15</strong>
-        </div>
-        <div class="stat-row">
-          <span class="label">Multiplier</span>
-          <strong class="val text-green">x{{ currentMultiplier | number:'1.2-2' }}</strong>
-        </div>
-        <div class="stat-row">
-          <span class="label">Accumulated Balance</span>
-          <strong class="val text-cyan">{{ (betAmount * currentMultiplier) | number:'1.2-2' }} Coins</strong>
-        </div>
-      </div>
-    }
-
-    <!-- Alerts -->
-    @if (errorMessage) {
-      <div class="alert-box alert-error">
-        <span>{{ errorMessage }}</span>
-      </div>
-    }
-    @if (winMessage) {
-      <div class="alert-box alert-success">
-        <span>{{ winMessage }}</span>
-      </div>
-    }
-
-    <!-- Actions -->
-    @if (!isGameActive) {
       <button 
         type="button" 
-        class="btn-primary w-full mt-4" 
-        [disabled]="isSubmitting || betAmount <= 0" 
-        (click)="onStartLudo()"
+        class="btn-primary w-full mt-6 py-3 text-lg font-bold" 
+        (click)="onPlayLudo()"
+        [disabled]="betAmount <= 0"
       >
-        Start Ludo Run
+        Find Match & Bet
       </button>
-    } @else {
-      <div class="action-grid mt-4">
-        <button 
-          type="button" 
-          class="btn-primary" 
-          [disabled]="isRollingDice || isSubmitting" 
-          (click)="onRollDie()"
-        >
-          Roll Die 🎲
-        </button>
-        <button 
-          type="button" 
-          class="btn-green" 
-          [disabled]="currentPosition === 0 || isRollingDice || isSubmitting" 
-          (click)="onCashOut()"
-        >
-          Cash Out
-        </button>
-      </div>
-    }
-  </div>
+    </div>
+  }
 
-  <!-- Right Side: Ludo Board Grid -->
-  <div class="board-panel glass-panel">
-    
-    <!-- Serpentine Ludo Board -->
-    <div class="ludo-arena">
+  <!-- ================= MATCHMAKING MODE ================= -->
+  @else if (currentMode === 'MATCHMAKING') {
+    <div class="matchmaking-card glass-panel text-center">
+      <h3 class="search-title">Searching for Opponents</h3>
+      <div class="search-loader">
+        <div class="spinner"></div>
+      </div>
       
-      <!-- Top header layout / die output -->
-      <div class="arena-header">
-        <div class="die-container" [ngClass]="{ 'die-rolling': isRollingDice }">
-          <div class="die-face face-{{ diceVisualValue }}">
-            @if (diceVisualValue === 1) { ⚀ }
-            @else if (diceVisualValue === 2) { ⚁ }
-            @else if (diceVisualValue === 3) { ⚂ }
-            @else if (diceVisualValue === 4) { ⚃ }
-            @else if (diceVisualValue === 5) { ⚄ }
-            @else { ⚅ }
-          </div>
+      <div class="versus-arena flex-row items-center justify-center mt-6">
+        <!-- User -->
+        <div class="matchmaking-player">
+          <span class="avatar-emoji text-4xl">
+            @if (authService.currentUser()?.avatar === 'avatar-ninja') { 🥷 }
+            @else if (authService.currentUser()?.avatar === 'avatar-surfer') { 🏄 }
+            @else if (authService.currentUser()?.avatar === 'avatar-king') { 👑 }
+            @else if (authService.currentUser()?.avatar === 'avatar-queen') { 👸 }
+            @else if (authService.currentUser()?.avatar === 'avatar-diamond') { 💎 }
+            @else if (authService.currentUser()?.avatar === 'avatar-champion') { 🏆 }
+            @else { 👤 }
+          </span>
+          <div class="name mt-2 text-cyan font-bold">{{ currentUserEmailName }}</div>
+          <span class="color-tag color-{{ selectedColor }}">{{ selectedColor }}</span>
         </div>
 
-        <div class="last-roll-log">
-          @if (lastRoll > 0) {
-            <span class="roll-badge">Rolled {{ lastRoll }}</span>
-          } @else {
-            <span class="roll-badge idle">Roll to start</span>
+        <div class="vs-divider text-2xl font-black">VS</div>
+
+        <!-- Matched bots list -->
+        <div class="matchmaking-opponents flex-row gap-4">
+          @for (opp of matchedOpponents; track opp.name) {
+            <div class="matchmaking-player">
+              <span class="avatar-emoji text-3xl">
+                @if (opp.avatar === 'avatar-ninja') { 🥷 }
+                @else if (opp.avatar === 'avatar-surfer') { 🏄 }
+                @else if (opp.avatar === 'avatar-king') { 👑 }
+                @else if (opp.avatar === 'avatar-queen') { 👸 }
+                @else if (opp.avatar === 'avatar-diamond') { 💎 }
+                @else if (opp.avatar === 'avatar-champion') { 🏆 }
+              </span>
+              <div class="name mt-1 font-bold">{{ opp.name }}</div>
+              <span class="color-tag color-{{ opp.color }}">{{ opp.color }}</span>
+            </div>
+          } @empty {
+            <div class="searching-placeholder italic text-muted">Searching for players...</div>
           }
         </div>
       </div>
 
-      <!--serpentine cell track grid -->
-      <div class="ludo-track">
-        @for (cell of trackCells; track cell.index) {
-          <div 
-            class="ludo-cell cell-type-{{ cell.type }}" 
-            [ngClass]="{
-              'cell-occupied': currentPosition === cell.index,
-              'cell-danger-zone': cell.type === 'danger',
-              'cell-star-zone': cell.type === 'star',
-              'cell-home-zone': cell.type === 'home'
-            }"
-          >
-            <!-- Cell Number -->
-            <span class="cell-num">{{ cell.index }}</span>
-
-            <!-- Cell type decoration emoji -->
-            <div class="cell-decor">
-              @if (cell.type === 'start') { 🏁 }
-              @else if (cell.type === 'star') { ⭐ }
-              @else if (cell.type === 'danger') { 💀 }
-              @else if (cell.type === 'home') { 🏆 }
-            </div>
-
-            <!-- Multiplier visual tag -->
-            <span class="cell-multiplier">{{ cell.multiplierLabel }}</span>
-
-            <!-- Token Piece overlays -->
-            @if (currentPosition === cell.index) {
-              <div class="token token-red">
-                🔴
-              </div>
-            }
-
-            <!-- Danger marker computers indicator -->
-            @if (cell.type === 'danger' && currentPosition !== cell.index) {
-              <div class="token token-blue-opponent animate-pulse">
-                🔵
-              </div>
-            }
-          </div>
-        }
-      </div>
-
-      <!-- Action logs scrolling list -->
-      <div class="ludo-logs glass-panel mt-4">
-        <h4>Roll Logs</h4>
-        <div class="log-lines">
-          @for (line of logMessages.slice().reverse(); track $index) {
-            <div class="log-line">
-              <span class="time-dot"></span>
-              <span class="text">{{ line }}</span>
-            </div>
-          }
-        </div>
+      <div class="countdown-badge mt-6 text-orange font-bold">
+        Match starts in {{ matchmakingTimer }}s...
       </div>
     </div>
+  }
 
-    <!-- Provably Fair Panel -->
-    @if (serverSeedHash) {
-      <div class="fairness-panel glass-panel mt-4">
-        <h3>Provably Fair Logs</h3>
+  <!-- ================= GAMEPLAY MODE ================= -->
+  @else if (currentMode === 'GAMEPLAY') {
+    <div class="gameplay-container">
+      
+      <!-- Ludo Board Wrapper -->
+      <div class="board-wrapper">
         
-        <div class="fairness-row font-mono">
-          <span class="label">Server Seed Hash (SHA256):</span>
-          <span class="val" title="{{ serverSeedHash }}">{{ serverSeedHash }}</span>
+        <!-- Active Profiles Corner HUDs -->
+        <div class="board-hud top-left-hud" [ngClass]="{ 'active-turn': players[activePlayerIndex]?.color === 'red' }">
+          <div class="profile-seal">🔴 Red</div>
+          <div class="profile-name">{{ players[activePlayerIndex]?.color === 'red' ? players[activePlayerIndex].name : 'Opponent' }}</div>
         </div>
         
-        @if (serverSeed) {
-          <div class="fairness-row font-mono">
-            <span class="label">Plain Server Seed (Revealed):</span>
-            <span class="val" title="{{ serverSeed }}">{{ serverSeed }}</span>
+        <div class="board-hud top-right-hud" [ngClass]="{ 'active-turn': players[activePlayerIndex]?.color === 'green' }">
+          <div class="profile-seal">🟢 Green</div>
+          <div class="profile-name">{{ players[activePlayerIndex]?.color === 'green' ? players[activePlayerIndex].name : 'Opponent' }}</div>
+        </div>
+
+        <div class="board-hud bottom-right-hud" [ngClass]="{ 'active-turn': players[activePlayerIndex]?.color === 'yellow' }">
+          <div class="profile-seal">🟡 Yellow</div>
+          <div class="profile-name">{{ players[activePlayerIndex]?.color === 'yellow' ? players[activePlayerIndex].name : 'Opponent' }}</div>
+        </div>
+
+        <div class="board-hud bottom-left-hud" [ngClass]="{ 'active-turn': players[activePlayerIndex]?.color === 'blue' }">
+          <div class="profile-seal">🔵 Blue</div>
+          <div class="profile-name">{{ players[activePlayerIndex]?.color === 'blue' ? players[activePlayerIndex].name : 'Opponent' }}</div>
+        </div>
+
+        <!-- 15x15 Board Grid Layout -->
+        <div class="ludo-board-grid">
+          @for (r of gridRows; track r) {
+            @for (c of gridCols; track c) {
+              <div class="grid-cell {{ getCellClass(r, c) }}">
+                
+                <!-- Star Decoration -->
+                @if (getCellClass(r, c).includes('cell-safe-star')) {
+                  <span class="star-decor">⭐</span>
+                }
+                @if (getCellClass(r, c).includes('cell-start-icon')) {
+                  <span class="star-decor">🏁</span>
+                }
+
+                <!-- Tokens resting on cell -->
+                <div class="cell-tokens-holder">
+                  @for (tok of getTokensAtCell(r, c); track tok.color + '_' + tok.id) {
+                    <div 
+                      class="token-pawn pawn-{{ tok.color }}" 
+                      [ngClass]="{
+                        'pawn-clickable': isGameActive && !isRollingDice && players[activePlayerIndex].color === tok.color && !players[activePlayerIndex].isBot && isValidMove(tok, lastRoll)
+                      }"
+                      (click)="onTokenClick(tok)"
+                    >
+                      @if (tok.color === 'red') { 🔴 }
+                      @else if (tok.color === 'green') { 🟢 }
+                      @else if (tok.color === 'yellow') { 🟡 }
+                      @else if (tok.color === 'blue') { 🔵 }
+                    </div>
+                  }
+                </div>
+
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <!-- Action Panel & Roll logs sidebar -->
+      <div class="dashboard-sidebar glass-panel">
+        
+        <!-- Turn Indicator Box -->
+        <div class="current-turn-indicator">
+          <h3>Active Turn</h3>
+          <div class="turn-bubble color-{{ players[activePlayerIndex]?.color }}">
+            {{ players[activePlayerIndex]?.name }} ({{ players[activePlayerIndex]?.color }})
+          </div>
+        </div>
+
+        <!-- Animated Dice Roll Container -->
+        <div class="dice-dashboard mt-4">
+          <button 
+            type="button" 
+            class="ludo-die-button" 
+            [disabled]="isRollingDice || players[activePlayerIndex]?.isBot || !isGameActive"
+            [ngClass]="{ 'die-shaking': isRollingDice }"
+            (click)="onRollClick()"
+          >
+            <div class="die-visual face-{{ diceVisualValue }}">
+              @if (diceVisualValue === 1) { ⚀ }
+              @else if (diceVisualValue === 2) { ⚁ }
+              @else if (diceVisualValue === 3) { ⚂ }
+              @else if (diceVisualValue === 4) { ⚃ }
+              @else if (diceVisualValue === 5) { ⚄ }
+              @else { ⚅ }
+            </div>
+          </button>
+          
+          <div class="dice-instructions text-center mt-2">
+            @if (players[activePlayerIndex]?.isBot) {
+              <span class="text-muted font-bold animate-pulse">Bot is thinking...</span>
+            } @else {
+              <span class="text-cyan font-bold">Tap Die to Roll 🎲</span>
+            }
+          </div>
+        </div>
+
+        <!-- Logs scrolling -->
+        <div class="match-logs mt-4">
+          <h4>Match Logs</h4>
+          <div class="logs-container">
+            @for (line of logLines.slice().reverse(); track $index) {
+              <div class="log-row">
+                <span class="bullet"></span>
+                <span>{{ line }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Seed Info -->
+        <div class="seeds-info font-mono text-xs mt-4">
+          <div>Server Seed Hash:</div>
+          <div class="hash text-muted text-ellipsis">{{ serverSeedHash }}</div>
+          <div>Nonce: {{ nonce }}</div>
+        </div>
+      </div>
+
+    </div>
+  }
+
+  <!-- ================= RESULTS MODE ================= -->
+  @else if (currentMode === 'RESULTS') {
+    <div class="results-card glass-panel text-center">
+      <h2 class="results-title">Game Over</h2>
+      
+      <div class="results-seal mt-4">
+        @if (winnerName === currentUserEmailName) {
+          <h1 class="victory-headline text-green">👑 VICTORY! 👑</h1>
+          <p>You conquered the board and beat all opponents!</p>
+          <div class="payout-banner text-2xl font-black text-cyan mt-2">
+            +{{ winPayout | number:'1.2-2' }} Coins
           </div>
         } @else {
-          <div class="fairness-row font-mono">
-            <span class="label">Plain Server Seed:</span>
-            <span class="val text-muted italic">Hidden until game ends</span>
-          </div>
-        }
-
-        <div class="fairness-row font-mono">
-          <span class="label">Client Seed:</span>
-          <span class="val">{{ clientSeed }}</span>
-        </div>
-
-        <div class="fairness-row font-mono">
-          <span class="label">Nonce:</span>
-          <span class="val">{{ nonce }}</span>
-        </div>
-
-        @if (serverSeed) {
-          <p class="verification-note mt-2">
-            Verify this outcome by copying the seeds into the verifier on your <a routerLink="/dashboard" class="text-cyan">Dashboard</a>.
-          </p>
+          <h1 class="defeat-headline text-red">☠️ DEFEATED ☠️</h1>
+          <p>Winner: <strong>{{ winnerName }}</strong></p>
+          <p class="text-muted mt-1">Better luck next time!</p>
         }
       </div>
-    }
-  </div>
+
+      <div class="provably-fair-verif glass-panel mt-6 text-left">
+        <h4>Verification Logs (Provably Fair)</h4>
+        
+        <div class="verif-row">
+          <span class="label">Server Seed Hash:</span>
+          <span class="val font-mono text-ellipsis">{{ serverSeedHash }}</span>
+        </div>
+        <div class="verif-row">
+          <span class="label">Server Seed (Revealed):</span>
+          <span class="val font-mono text-ellipsis">{{ serverSeed }}</span>
+        </div>
+        <div class="verif-row">
+          <span class="label">Client Seed:</span>
+          <span class="val font-mono">{{ clientSeed }}</span>
+        </div>
+        <div class="verif-row">
+          <span class="label">Nonce:</span>
+          <span class="val font-mono">{{ nonce }}</span>
+        </div>
+
+        <p class="verif-hint mt-2 text-muted">
+          Copy these values to the verifier on your <a routerLink="/dashboard" class="text-cyan">Dashboard</a> to check rolls.
+        </p>
+      </div>
+
+      <button type="button" class="btn-primary w-full mt-6 py-2" (click)="onReturnToLobby()">
+        Return to Lobby
+      </button>
+    </div>
+  }
 
 </div>

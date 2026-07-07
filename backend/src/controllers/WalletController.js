@@ -71,3 +71,123 @@ exports.getLeaderboard = async (req, res) => {
   }
 };
 
+exports.claimDailyBonus = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    const alreadyClaimed = await Ledger.findOne({
+      userId,
+      type: 'reward',
+      game: 'daily_bonus',
+      timestamp: { $gte: oneDayAgo }
+    });
+
+    if (alreadyClaimed) {
+      return res.status(400).json({ error: 'Daily bonus already claimed within the last 24 hours. Come back tomorrow!' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    user.balance += 50.0;
+    await user.save();
+
+    const ledger = new Ledger({
+      userId: user._id,
+      amount: 50.0,
+      type: 'reward',
+      game: 'daily_bonus',
+      resultingBalance: user.balance
+    });
+    await ledger.save();
+
+    res.json({
+      message: 'Daily bonus claimed successfully! +50.00 Coins credited to your wallet.',
+      balance: user.balance
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.deposit = async (req, res) => {
+  try {
+    const { amount, method, details } = req.body;
+    const val = parseFloat(amount);
+    if (isNaN(val) || val <= 0) {
+      return res.status(400).json({ error: 'Invalid deposit amount.' });
+    }
+    if (!method || !details) {
+      return res.status(400).json({ error: 'Deposit method and account details are required.' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    user.balance += val;
+    await user.save();
+
+    const ledger = new Ledger({
+      userId: user._id,
+      amount: val,
+      type: 'reward',
+      game: 'deposit',
+      resultingBalance: user.balance
+    });
+    await ledger.save();
+
+    res.json({
+      message: `Deposit of ${val.toFixed(2)} Coins processed successfully via ${method.toUpperCase()}!`,
+      balance: user.balance
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.withdraw = async (req, res) => {
+  try {
+    const { amount, method, details } = req.body;
+    const val = parseFloat(amount);
+    if (isNaN(val) || val <= 0) {
+      return res.status(400).json({ error: 'Invalid withdrawal amount.' });
+    }
+    if (!method || !details) {
+      return res.status(400).json({ error: 'Withdrawal method and target details are required.' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    if (user.balance < val) {
+      return res.status(400).json({ error: 'Insufficient balance to request withdrawal.' });
+    }
+
+    user.balance -= val;
+    await user.save();
+
+    const ledger = new Ledger({
+      userId: user._id,
+      amount: -val,
+      type: 'cashout',
+      game: 'withdrawal',
+      resultingBalance: user.balance
+    });
+    await ledger.save();
+
+    res.json({
+      message: `Withdrawal request for ${val.toFixed(2)} Coins submitted successfully! Funds will be transferred via ${method.toUpperCase()} shortly.`,
+      balance: user.balance
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+

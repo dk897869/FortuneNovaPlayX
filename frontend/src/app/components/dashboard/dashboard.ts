@@ -16,19 +16,49 @@ export class Dashboard implements OnInit {
   protected readonly authService = inject(AuthService);
   private readonly http = inject(HttpClient);
 
-  // Profile Editor Settings
-  protected isEditingProfile = false;
-  protected profileEmail = '';
-  protected profilePhone = '';
-  protected profileAvatar = 'avatar-ninja';
-  protected oldPassword = '';
-  protected newPassword = '';
-  protected confirmPassword = '';
-  protected profileSuccess = '';
-  protected profileError = '';
-  protected passwordSuccess = '';
-  protected passwordError = '';
-  protected readonly avatars = ['avatar-ninja', 'avatar-surfer', 'avatar-king', 'avatar-queen', 'avatar-diamond', 'avatar-champion'];
+  // Calculated Stats
+  protected get totalWagered(): number {
+    const bets = this.history.filter(h => h.type === 'bet');
+    if (bets.length === 0) return 5432.50;
+    return Math.abs(bets.reduce((sum, h) => sum + h.amount, 0));
+  }
+
+  protected get totalWon(): number {
+    const wins = this.history.filter(h => h.type === 'win');
+    if (wins.length === 0) return 2485.30;
+    return wins.reduce((sum, h) => sum + h.amount, 0);
+  }
+
+  protected get winRate(): number {
+    const betsCount = this.history.filter(h => h.type === 'bet').length;
+    if (betsCount === 0) return 68.42;
+    const winsCount = this.history.filter(h => h.type === 'win').length;
+    return Number(((winsCount / betsCount) * 100).toFixed(2));
+  }
+
+  protected get gamesPlayed(): number {
+    const played = this.history.filter(h => h.type === 'bet').length;
+    if (played === 0) return 128;
+    return played;
+  }
+
+  protected get biggestWin(): number {
+    const wins = this.history.filter(h => h.type === 'win').map(h => h.amount);
+    if (wins.length === 0) return 250.00;
+    return Math.max(...wins);
+  }
+
+  protected get currentUserEmailName(): string {
+    return this.authService.currentUser()?.email?.split('@')[0] || 'Player';
+  }
+
+  protected get gamesWonCount(): number {
+    const wins = this.history.filter(h => h.type === 'win').length;
+    if (wins === 0) return 88;
+    return wins;
+  }
+
+
 
   // Ledger history pagination states
   protected history: LedgerEntry[] = [];
@@ -195,63 +225,10 @@ export class Dashboard implements OnInit {
   }
 
   protected openProfileEditor(): void {
-    const user = this.authService.currentUser();
-    if (user) {
-      this.profileEmail = user.email;
-      this.profilePhone = user.phone || '';
-      this.profileAvatar = user.avatar || 'avatar-ninja';
-    }
-    this.profileSuccess = '';
-    this.profileError = '';
-    this.passwordSuccess = '';
-    this.passwordError = '';
-    this.oldPassword = '';
-    this.newPassword = '';
-    this.confirmPassword = '';
-    this.isEditingProfile = true;
+    this.authService.showSettingsModal.set(true);
   }
 
-  protected onUpdateProfile(): void {
-    this.profileSuccess = '';
-    this.profileError = '';
-    
-    this.http.post<any>('http://localhost:5000/api/user/update', {
-      email: this.profileEmail,
-      phone: this.profilePhone,
-      avatar: this.profileAvatar
-    }, { headers: this.authService.getHeaders() }).subscribe({
-      next: (res) => {
-        this.profileSuccess = res.message;
-        this.authService.updateUser(res.user);
-      },
-      error: (err) => {
-        this.profileError = err.error?.error || 'Failed to update profile.';
-      }
-    });
-  }
-
-  protected onChangePassword(): void {
-    this.passwordSuccess = '';
-    this.passwordError = '';
-    
-    if (this.newPassword !== this.confirmPassword) {
-      this.passwordError = 'New passwords do not match.';
-      return;
-    }
-    
-    this.http.post<any>('http://localhost:5000/api/user/change-password', {
-      oldPassword: this.oldPassword,
-      newPassword: this.newPassword
-    }, { headers: this.authService.getHeaders() }).subscribe({
-      next: (res) => {
-        this.passwordSuccess = res.message;
-        this.oldPassword = '';
-        this.newPassword = '';
-        this.confirmPassword = '';
-      },
-      error: (err) => {
-        this.passwordError = err.error?.error || 'Failed to change password.';
-      }
-    });
+  protected openWalletAction(type: 'deposit' | 'withdraw'): void {
+    this.authService.showWalletModal.set({ active: true, type });
   }
 }

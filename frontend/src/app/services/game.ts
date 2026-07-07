@@ -132,8 +132,8 @@ export class GameService {
     );
   }
 
-  public startLudo(payload: { betAmount: number; clientSeed?: string }): Observable<LudoStartResponse> {
-    return this.http.post<LudoStartResponse>(`${this.apiUrl}/games/ludo/start`, payload, { headers: this.authService.getHeaders() }).pipe(
+  public startLudo(payload: { betAmount: number; clientSeed?: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/games/ludo/bet`, payload, { headers: this.authService.getHeaders() }).pipe(
       tap(res => {
         const current = this.authService.currentUser();
         if (current) {
@@ -143,21 +143,12 @@ export class GameService {
     );
   }
 
-  public rollLudo(payload: { gameId: string }): Observable<LudoRollResponse> {
-    return this.http.post<LudoRollResponse>(`${this.apiUrl}/games/ludo/roll`, payload, { headers: this.authService.getHeaders() }).pipe(
-      tap(res => {
-        if (res.isCompleted && res.newBalance !== undefined) {
-          const current = this.authService.currentUser();
-          if (current) {
-            this.authService.updateUser({ ...current, balance: res.newBalance });
-          }
-        }
-      })
-    );
+  public rollLudo(payload: { gameId: string; rollIndex: number }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/games/ludo/roll-dice`, payload, { headers: this.authService.getHeaders() });
   }
 
-  public cashoutLudo(payload: { gameId: string }): Observable<LudoCashoutResponse> {
-    return this.http.post<LudoCashoutResponse>(`${this.apiUrl}/games/ludo/cashout`, payload, { headers: this.authService.getHeaders() }).pipe(
+  public cashoutLudo(payload: { gameId: string; playerCount: number }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/games/ludo/claim-win`, payload, { headers: this.authService.getHeaders() }).pipe(
       tap(res => {
         if (res.success) {
           const current = this.authService.currentUser();

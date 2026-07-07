@@ -53,4 +53,37 @@ export class WalletService {
   public getLeaderboard(): Observable<LeaderboardResponse> {
     return this.http.get<LeaderboardResponse>(`${this.apiUrl}/wallet/leaderboard`, { headers: this.authService.getHeaders() });
   }
+
+  public claimDailyBonus(): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/wallet/claim-daily`, {}, { headers: this.authService.getHeaders() }).pipe(
+      tap(res => {
+        const current = this.authService.currentUser();
+        if (current) {
+          this.authService.updateUser({ ...current, balance: res.balance });
+        }
+      })
+    );
+  }
+
+  public deposit(amount: number, method: string, details: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/wallet/deposit`, { amount, method, details }, { headers: this.authService.getHeaders() }).pipe(
+      tap(res => {
+        const current = this.authService.currentUser();
+        if (current) {
+          this.authService.updateUser({ ...current, balance: res.balance });
+        }
+      })
+    );
+  }
+
+  public withdraw(amount: number, method: string, details: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/wallet/withdraw`, { amount, method, details }, { headers: this.authService.getHeaders() }).pipe(
+      tap(res => {
+        const current = this.authService.currentUser();
+        if (current) {
+          this.authService.updateUser({ ...current, balance: res.balance });
+        }
+      })
+    );
+  }
 }

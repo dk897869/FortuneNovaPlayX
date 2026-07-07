@@ -1,61 +1,600 @@
-<!-- Global Linear Loader -->
-@if (loaderService.isLoading()) {
-  <div class="linear-loader">
-    <div class="bar"></div>
+<div class="app-layout-wrapper">
+
+  @if (authService.currentUser(); as user) {
+    <!-- ================= LEFT SIDEBAR ================= -->
+    <aside class="app-sidebar glass-panel">
+      <!-- Brand Logo -->
+      <div class="sidebar-brand">
+        <span class="brand-logo-icon">💎</span>
+        <span class="brand-name">Fortune<span class="brand-highlight">PlayX</span></span>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav">
+        <a routerLink="/dashboard" routerLinkActive="active-sidebar-link" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+        <a routerLink="/dice" routerLinkActive="active-sidebar-link" class="nav-item">
+          <span class="nav-icon">🎲</span>
+          <span class="nav-label">Dice</span>
+        </a>
+        <a routerLink="/mines" routerLinkActive="active-sidebar-link" class="nav-item">
+          <span class="nav-icon">💣</span>
+          <span class="nav-label">Mines</span>
+        </a>
+        <a routerLink="/fruit-ninja" routerLinkActive="active-sidebar-link" class="nav-item">
+          <span class="nav-icon">⚔️</span>
+          <span class="nav-label">Fruit Ninja</span>
+        </a>
+        <a routerLink="/ludo" routerLinkActive="active-sidebar-link" class="nav-item">
+          <span class="nav-icon">♟️</span>
+          <span class="nav-label">Ludo</span>
+        </a>
+        <a routerLink="/leaderboard" routerLinkActive="active-sidebar-link" class="nav-item">
+          <span class="nav-icon">🏆</span>
+          <span class="nav-label">Leaderboard</span>
+        </a>
+        
+        <div class="nav-divider"></div>
+
+        <a (click)="openTransactions()" class="nav-item cursor-pointer">
+          <span class="nav-icon">📅</span>
+          <span class="nav-label">Transactions</span>
+        </a>
+        <a (click)="isViewingRewards = true; dailySuccess = ''; dailyError = '';" class="nav-item cursor-pointer">
+          <span class="nav-icon">🎁</span>
+          <span class="nav-label">Rewards</span>
+        </a>
+        <a (click)="openProfileEditor()" class="nav-item cursor-pointer">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Settings</span>
+        </a>
+        <a (click)="isViewingSupport = true; supportSuccess = ''; supportMessage = '';" class="nav-item cursor-pointer">
+          <span class="nav-icon">💬</span>
+          <span class="nav-label">Support</span>
+        </a>
+        <a (click)="logout()" class="nav-item logout-item">
+          <span class="nav-icon">🔌</span>
+          <span class="nav-label">Logout</span>
+        </a>
+      </nav>
+
+      <!-- Sidebar Promo Card: Invite & Earn -->
+      <div class="sidebar-promo-card mt-auto text-center">
+        <h4 class="promo-title">Invite & Earn</h4>
+        <p class="promo-text">Invite your friends and earn upto 5% commission on every bet!</p>
+        <div class="giftbox-wrapper">🎁</div>
+        <button type="button" class="btn-promo-action mt-2" (click)="copyInviteLink()">Invite Now</button>
+      </div>
+    </aside>
+  }
+
+  <!-- ================= RIGHT CONTENT AREA ================= -->
+  <div class="app-main-content">
+    
+    @if (authService.currentUser(); as user) {
+      <!-- Top header bar -->
+      <header class="app-top-header">
+        
+        <!-- Daily Bonus Banner -->
+        <div class="header-bonus-banner glass-panel">
+          <div class="bonus-details">
+            <span class="bonus-title">🎁 Daily Bonus</span>
+            <span class="bonus-subtitle">Claim your free reward every day!</span>
+          </div>
+          <div class="bonus-time-box text-center">
+            <div class="time-label" [style.color]="dailyCooldownSeconds > 0 ? '#ef4444' : '#10b981'">{{ formattedDailyTime }}</div>
+            <div class="time-subtitle">Time Left</div>
+          </div>
+          <button 
+            type="button" 
+            class="btn-bonus-claim"
+            [disabled]="dailyCooldownSeconds > 0"
+            [style.opacity]="dailyCooldownSeconds > 0 ? '0.5' : '1'"
+            [style.cursor]="dailyCooldownSeconds > 0 ? 'not-allowed' : 'pointer'"
+            (click)="onClaimDaily()"
+          >
+            {{ dailyCooldownSeconds > 0 ? 'Claimed' : 'Claim Now' }}
+          </button>
+        </div>
+
+        <!-- Right Side Stats / HUD -->
+        <div class="header-hud-group ml-auto">
+          <!-- Balance Pill -->
+          <div class="header-balance-pill glass-panel">
+            <span class="coin-pill-icon">🪙</span>
+            <span class="balance-amount">{{ user.balance | number:'1.2-2' }}</span>
+            <span class="balance-unit">COINS</span>
+            <button type="button" class="btn-quick-plus" (click)="openWalletAction('deposit')">+</button>
+          </div>
+
+          <!-- Notification Bell -->
+          <div style="position: relative;">
+            <button type="button" class="btn-icon-hud" title="Notifications" (click)="toggleNotifications()">
+              <span class="bell-icon">🔔</span>
+            </button>
+
+            <!-- Notifications Dropdown -->
+            @if (isViewingNotifications) {
+              <div class="notifications-dropdown glass-panel">
+                <div class="notif-header">
+                  <h5>Platform Alerts</h5>
+                  <button type="button" class="btn-clear-notif" (click)="isViewingNotifications = false">✕</button>
+                </div>
+                <div class="notif-list">
+                  @for (notif of notificationsList; track notif) {
+                    <div class="notif-item">
+                      <span class="notif-dot"></span>
+                      <span class="notif-text">{{ notif }}</span>
+                    </div>
+                  } @empty {
+                    <div class="notif-empty text-center py-4 text-muted italic" style="font-size: 0.72rem;">No new alerts. Place bets to view logs!</div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- User Badge Profile Info -->
+          <button type="button" class="btn-header-profile" (click)="openProfileEditor()" title="Edit Profile & Settings">
+            <span class="profile-pic-emoji">
+              @if (user.avatar === 'avatar-ninja') { 🥷 }
+              @else if (user.avatar === 'avatar-surfer') { 🏄 }
+              @else if (user.avatar === 'avatar-king') { 👑 }
+              @else if (user.avatar === 'avatar-queen') { 👸 }
+              @else if (user.avatar === 'avatar-diamond') { 💎 }
+              @else if (user.avatar === 'avatar-champion') { 🏆 }
+              @else { 👤 }
+            </span>
+            <div class="profile-text text-left">
+              <div class="username-wrapper">
+                <span class="profile-username">{{ user.email.split('@')[0] }}</span>
+                <span class="verified-seal">✓</span>
+              </div>
+              <span class="profile-level">Level 12</span>
+            </div>
+          </button>
+        </div>
+
+      </header>
+    }
+
+    <!-- Viewport Container -->
+    <main class="content-viewport">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+
+  <!-- ================= MOBILE BOTTOM TAB NAVIGATION BAR ================= -->
+  @if (authService.currentUser(); as user) {
+    <div class="mobile-bottom-navbar glass-panel">
+      <a routerLink="/dashboard" routerLinkActive="active-tab" [routerLinkActiveOptions]="{exact: true}" class="tab-item">
+        <span class="tab-icon">🏠</span>
+        <span class="tab-label">Home</span>
+      </a>
+      <a routerLink="/dice" routerLinkActive="active-tab" class="tab-item">
+        <span class="tab-icon">🎲</span>
+        <span class="tab-label">Dice</span>
+      </a>
+      <a routerLink="/mines" routerLinkActive="active-tab" class="tab-item">
+        <span class="tab-icon">💣</span>
+        <span class="tab-label">Mines</span>
+      </a>
+      <a routerLink="/ludo" routerLinkActive="active-tab" class="tab-item">
+        <span class="tab-icon">♟️</span>
+        <span class="tab-label">Ludo</span>
+      </a>
+      <a (click)="openProfileEditor()" class="tab-item">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Profile</span>
+      </a>
+    </div>
+  }
+
+</div>
+
+<!-- ================= GLOBAL PROFILE EDIT MODAL ================= -->
+@if (isEditingProfile) {
+  <div class="modal-overlay">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3>Edit Profile & Security</h3>
+        <button type="button" class="btn-close" (click)="isEditingProfile = false">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="profile-section">
+          <h4>Account Details</h4>
+          @if (profileError) {
+            <div class="alert-box alert-error mt-2"><span>{{ profileError }}</span></div>
+          }
+          @if (profileSuccess) {
+            <div class="alert-box alert-success mt-2"><span>{{ profileSuccess }}</span></div>
+          }
+          <form (ngSubmit)="onUpdateProfile()" class="settings-form mt-2">
+            <div class="form-group">
+              <label class="form-label">Email ID</label>
+              <input type="email" class="form-input" [(ngModel)]="profileEmail" name="email" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mobile Number</label>
+              <input type="tel" class="form-input" [(ngModel)]="profilePhone" name="phone" placeholder="+1234567890" />
+            </div>
+
+            <!-- Avatar selector grid -->
+            <div class="form-group">
+              <label class="form-label">Select Profile Picture (Avatar)</label>
+              <div class="avatar-grid" style="display: flex; gap: 10px; margin-top: 8px; justify-content: center; flex-wrap: wrap;">
+                @for (av of avatars; track av) {
+                  <button 
+                    type="button" 
+                    class="btn-avatar-choice" 
+                    [ngClass]="{ 'active-avatar': profileAvatar === av }"
+                    (click)="profileAvatar = av"
+                    style="font-size: 1.8rem; background: rgba(255,255,255,0.05); border: 2px solid transparent; border-radius: 50%; padding: 8px; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+                  >
+                    <span class="avatar-emoji">
+                      @if (av === 'avatar-ninja') { 🥷 }
+                      @else if (av === 'avatar-surfer') { 🏄 }
+                      @else if (av === 'avatar-king') { 👑 }
+                      @else if (av === 'avatar-queen') { 👸 }
+                      @else if (av === 'avatar-diamond') { 💎 }
+                      @else if (av === 'avatar-champion') { 🏆 }
+                    </span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary w-full mt-4">Save Profile Details</button>
+          </form>
+        </div>
+
+        <hr class="section-divider" style="margin: 20px 0; border: none; border-top: 1px solid rgba(255, 255, 255, 0.08);" />
+
+        <div class="profile-section">
+          <h4>Change Password</h4>
+          @if (passwordError) {
+            <div class="alert-box alert-error mt-2"><span>{{ passwordError }}</span></div>
+          }
+          @if (passwordSuccess) {
+            <div class="alert-box alert-success mt-2"><span>{{ passwordSuccess }}</span></div>
+          }
+          <form (ngSubmit)="onChangePassword()" class="settings-form mt-2">
+            <div class="form-group">
+              <label class="form-label">Current Password</label>
+              <input type="password" class="form-input" [(ngModel)]="oldPassword" name="oldPassword" placeholder="••••••••" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <input type="password" class="form-input" [(ngModel)]="newPassword" name="newPassword" placeholder="••••••••" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm New Password</label>
+              <input type="password" class="form-input" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="••••••••" required />
+            </div>
+
+            <button type="submit" class="btn-green w-full mt-4">Change Password</button>
+          </form>
+        </div>
+
+        <hr class="section-divider" style="margin: 20px 0; border: none; border-top: 1px solid rgba(255, 255, 255, 0.08);" />
+
+        <div class="profile-section">
+          <h4 style="color: #f87171;">Danger Zone</h4>
+          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">
+            Permanently delete your profile and all wallet balances. This action is irreversible.
+          </p>
+          <button type="button" class="btn-red w-full" (click)="onDeleteProfile()">Delete Profile Account</button>
+        </div>
+      </div>
+    </div>
   </div>
 }
 
-<div class="app-container">
-  <!-- Navbar -->
-  @if (authService.isLoggedIn() && authService.currentUser(); as user) {
-    <nav class="app-nav glass-panel">
-      <div class="nav-brand" routerLink="/dashboard">
-        <span class="brand-gradient">FortunePlayX</span>
+<!-- ================= GLOBAL WALLET ACTIONS MODAL (DEPOSIT / WITHDRAW) ================= -->
+@if (isViewingWalletAction) {
+  <div class="modal-overlay">
+    <div class="modal-content glass-panel wallet-action-modal">
+      <div class="modal-header">
+        <h3 style="text-transform: capitalize;">
+          @if (walletActionType === 'deposit') { 📥 deposit coins } @else { 📤 cashout coins }
+        </h3>
+        <button type="button" class="btn-close" (click)="isViewingWalletAction = false">✕</button>
       </div>
-      
-      <div class="nav-links">
-        <a routerLink="/dashboard" routerLinkActive="active-link" class="nav-item">Dashboard</a>
-        <a routerLink="/dice" routerLinkActive="active-link" class="nav-item">Dice</a>
-        <a routerLink="/mines" routerLinkActive="active-link" class="nav-item">Mines</a>
-        <a routerLink="/fruit-ninja" routerLinkActive="active-link" class="nav-item">Fruit Ninja</a>
-        <a routerLink="/ludo" routerLinkActive="active-link" class="nav-item">Ludo</a>
-        <a routerLink="/leaderboard" routerLinkActive="active-link" class="nav-item">Leaderboard</a>
-      </div>
-      
-      <div class="nav-user">
-        <!-- Dynamic Balance Pill -->
-        <div class="balance-pill glass-panel">
-          <svg class="coin-icon" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1" fill="none"/>
-            <path d="M12 6v12M15 9H11.5a2.5 2.5 0 0 0 0 5H13a2.5 2.5 0 0 1 0 5H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
-          </svg>
-          <span class="balance-amount">{{ user.balance | number:'1.2-2' }}</span>
-          <span class="coin-label">Coins</span>
+
+      <div class="modal-body">
+        @if (walletError) {
+          <div class="alert-box alert-error"><span>⚠️ {{ walletError }}</span></div>
+        }
+        @if (walletSuccess) {
+          <div class="alert-box alert-success"><span>✅ {{ walletSuccess }}</span></div>
+        }
+
+        <!-- Toggle type tab navigation (Deposit / Withdraw) -->
+        <div class="wallet-tabs">
+          <button 
+            type="button" 
+            class="wallet-tab-btn" 
+            [class.active-tab-deposit]="walletActionType === 'deposit'"
+            (click)="walletActionType = 'deposit'; walletSuccess = ''; walletError = '';"
+          >
+            Deposit
+          </button>
+          <button 
+            type="button" 
+            class="wallet-tab-btn" 
+            [class.active-tab-withdraw]="walletActionType === 'withdraw'"
+            (click)="walletActionType = 'withdraw'; walletSuccess = ''; walletError = '';"
+          >
+            Withdraw
+          </button>
         </div>
 
-        <!-- Dynamic User Avatar -->
-        <span class="nav-avatar-emoji" style="font-size: 1.3rem; margin-right: 4px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));">
-          @if (user.avatar === 'avatar-ninja') { 🥷 }
-          @else if (user.avatar === 'avatar-surfer') { 🏄 }
-          @else if (user.avatar === 'avatar-king') { 👑 }
-          @else if (user.avatar === 'avatar-queen') { 👸 }
-          @else if (user.avatar === 'avatar-diamond') { 💎 }
-          @else if (user.avatar === 'avatar-champion') { 🏆 }
-          @else { 👤 }
-        </span>
-        <span class="user-email" title="{{ user.email }}">{{ user.email.split('@')[0] }}</span>
+        <form (ngSubmit)="onSubmitWalletAction()" class="settings-form mt-4">
+          
+          <!-- Method Selection Pills -->
+          <div class="form-group">
+            <label class="form-label text-muted">Select Payment Method</label>
+            <div class="payment-methods-grid">
+              <button 
+                type="button" 
+                class="method-card"
+                [class.active-method]="walletMethod === 'bank'"
+                (click)="walletMethod = 'bank'"
+              >
+                <div class="method-icon">🏦</div>
+                <div class="method-name">Bank Transfer</div>
+              </button>
+              <button 
+                type="button" 
+                class="method-card"
+                [class.active-method]="walletMethod === 'upi'"
+                (click)="walletMethod = 'upi'"
+              >
+                <div class="method-icon">📲</div>
+                <div class="method-name">UPI Payment</div>
+              </button>
+              <button 
+                type="button" 
+                class="method-card"
+                [class.active-method]="walletMethod === 'paytm'"
+                (click)="walletMethod = 'paytm'"
+              >
+                <div class="method-icon">👜</div>
+                <div class="method-name">Paytm Wallet</div>
+              </button>
+            </div>
+          </div>
 
-        <button (click)="logout()" class="btn-logout" title="Log Out">
-          <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
-          </svg>
-        </button>
+          <!-- Amount Box with chips -->
+          <div class="form-group mt-4">
+            <label class="form-label text-muted">Enter Coin Amount</label>
+            <div class="amount-input-wrapper">
+              <span class="coin-prefix">🪙</span>
+              <input type="number" class="amount-input font-bold" min="10" step="10" [(ngModel)]="walletAmount" name="walletAmount" required />
+            </div>
+            <div class="amount-quick-chips">
+              @for (chip of [500, 1000, 2000, 5000]; track chip) {
+                <button type="button" class="btn-chip" (click)="walletAmount = chip">+{{ chip }}</button>
+              }
+            </div>
+          </div>
+
+          <!-- Method Details Form Inputs -->
+          <div class="form-group mt-4 payment-fields-card glass-panel">
+            @if (walletMethod === 'bank') {
+              <label class="form-label">Destination Bank Account Details</label>
+              <textarea class="form-input font-mono" rows="3" [(ngModel)]="walletDetails" name="walletDetails" placeholder="Account Number: 123456789&#10;IFSC Code: SBIN0001234&#10;Holder Name: John Doe" required></textarea>
+            }
+            @else if (walletMethod === 'upi') {
+              <label class="form-label">Virtual Payment Address (VPA)</label>
+              <input type="text" class="form-input font-mono" [(ngModel)]="walletDetails" name="walletDetails" placeholder="yourname@upi" required />
+            }
+            @else {
+              <label class="form-label">Paytm Mobile Number</label>
+              <input type="tel" class="form-input font-mono" [(ngModel)]="walletDetails" name="walletDetails" placeholder="+91 98765 43210" required />
+            }
+          </div>
+
+          <!-- Submit Action Button -->
+          <button type="submit" class="btn-wallet-submit mt-6" [class.btn-deposit-gradient]="walletActionType === 'deposit'" [class.btn-withdraw-gradient]="walletActionType === 'withdraw'">
+            Confirm {{ walletActionType === 'deposit' ? 'Deposit Request' : 'Withdrawal Cashout' }}
+          </button>
+        </form>
       </div>
-    </nav>
-  }
+    </div>
+  </div>
+}
 
-  <!-- Main Viewport Router Outlet -->
-  <main class="app-main">
-    <router-outlet></router-outlet>
-  </main>
-</div>
+<!-- ================= GLOBAL TRANSACTIONS HISTORICAL MODAL ================= -->
+@if (isViewingTransactions) {
+  <div class="modal-overlay">
+    <div class="modal-content glass-panel" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3>Transaction History Ledger</h3>
+        <button type="button" class="btn-close" (click)="isViewingTransactions = false">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="overflow-x: auto;">
+          <table class="tx-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                <th style="padding: 10px; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Date</th>
+                <th style="padding: 10px; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Game/Event</th>
+                <th style="padding: 10px; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Type</th>
+                <th style="padding: 10px; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Amount</th>
+                <th style="padding: 10px; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (tx of txList; track tx.timestamp) {
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.02);">
+                  <td style="padding: 10px; font-size: 0.76rem;" class="font-mono text-muted">{{ tx.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+                  <td style="padding: 10px; font-size: 0.76rem;" class="font-bold capitalize">{{ tx.game }}</td>
+                  <td style="padding: 10px; font-size: 0.76rem;">
+                    <span 
+                      style="font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 4px;"
+                      [style.background]="tx.type === 'win' || tx.type === 'reward' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)'"
+                      [style.color]="tx.type === 'win' || tx.type === 'reward' ? '#34d399' : '#f87171'"
+                    >
+                      {{ tx.type }}
+                    </span>
+                  </td>
+                  <td style="padding: 10px; font-size: 0.76rem;" class="font-mono font-bold" [ngClass]="{ 'text-green': tx.amount > 0, 'text-red': tx.amount < 0 }">
+                    {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number:'1.2-2' }}
+                  </td>
+                  <td style="padding: 10px; font-size: 0.76rem;" class="font-mono text-secondary">{{ tx.resultingBalance | number:'1.2-2' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" style="padding: 24px; text-align: center;" class="text-muted italic">No logs found. Start placing wagers!</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+          <button 
+            type="button" 
+            class="btn-adjust" 
+            [disabled]="txPage <= 1"
+            (click)="openTransactions(txPage - 1)"
+            style="padding: 4px 10px; font-size: 0.75rem;"
+          >
+            ← Prev
+          </button>
+          <span style="font-size: 0.75rem;" class="text-muted">Page {{ txPage }} of {{ txTotalPages }}</span>
+          <button 
+            type="button" 
+            class="btn-adjust" 
+            [disabled]="txPage >= txTotalPages"
+            (click)="openTransactions(txPage + 1)"
+            style="padding: 4px 10px; font-size: 0.75rem;"
+          >
+            Next →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ================= GLOBAL REWARDS LOUNGE MODAL ================= -->
+@if (isViewingRewards) {
+  <div class="modal-overlay">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3>Rewards & Bonus Lounge</h3>
+        <button type="button" class="btn-close" (click)="isViewingRewards = false">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Daily Claim -->
+        <div class="profile-section">
+          <h4>🎁 Claim Daily Bonus</h4>
+          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 10px;">
+            Claim free Game Coins reward once every 24 hours.
+          </p>
+          
+          @if (dailyError) {
+            <div class="alert-box alert-error"><span>{{ dailyError }}</span></div>
+          }
+          @if (dailySuccess) {
+            <div class="alert-box alert-success"><span>{{ dailySuccess }}</span></div>
+          }
+
+          <div style="display: flex; gap: 12px; align-items: center;" class="mt-2">
+            <span class="font-mono text-muted" style="font-size: 0.85rem;">Time left: {{ formattedDailyTime }}</span>
+            <button 
+              type="button" 
+              class="btn-primary flex-1" 
+              [disabled]="dailyCooldownSeconds > 0"
+              (click)="onClaimDaily()"
+            >
+              {{ dailyCooldownSeconds > 0 ? 'Claimed' : 'Claim 50 Free Coins' }}
+            </button>
+          </div>
+        </div>
+
+        <hr class="section-divider" style="margin: 20px 0; border: none; border-top: 1px solid rgba(255, 255, 255, 0.08);" />
+
+        <!-- Referral code details -->
+        <div class="profile-section">
+          <h4>📢 Refer & Earn Program</h4>
+          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">
+            Invite a friend! When they sign up using your referral link, <strong>both of you instantly receive 2,000 Game Coins</strong> added directly to your wallets!
+          </p>
+
+          <div class="form-group">
+            <label class="form-label" style="font-size: 0.65rem;">Your Referral Code</label>
+            <input type="text" class="form-input text-center font-mono font-bold text-cyan" style="font-size: 1.2rem; background: rgba(255,255,255,0.02);" [value]="authService.currentUser()?.referralCode || 'LOG IN'" readonly />
+          </div>
+
+          <button type="button" class="btn-green w-full mt-4" (click)="copyInviteLink()">
+            Copy Invite Link
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ================= GLOBAL LIVE SUPPORT & FAQS MODAL ================= -->
+@if (isViewingSupport) {
+  <div class="modal-overlay">
+    <div class="modal-content glass-panel" style="max-height: 90vh;">
+      <div class="modal-header">
+        <h3>Support & FAQ Helpdesk</h3>
+        <button type="button" class="btn-close" (click)="isViewingSupport = false">✕</button>
+      </div>
+
+      <div class="modal-body" style="overflow-y: auto;">
+        <!-- Collapsible FAQs -->
+        <div class="profile-section">
+          <h4>💡 Frequently Asked Questions</h4>
+          
+          <details style="margin-top: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; cursor: pointer;">
+            <summary style="font-size: 0.8rem; font-weight: 700; color: #fff;">How do I claim payouts?</summary>
+            <p style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 6px; cursor: default;">
+              Winning tokens or cashouts are automatically validated on the backend. Multipliers are instantly credited to your wallet balance.
+            </p>
+          </details>
+
+          <details style="margin-top: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; cursor: pointer;">
+            <summary style="font-size: 0.8rem; font-weight: 700; color: #fff;">Is the gaming outcome provably fair?</summary>
+            <p style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 6px; cursor: default;">
+              Yes! Every roll of the dice or mine coordinate is determined using HMAC-SHA256 calculations containing revealed server seeds and your client seeds. You can verify outcome integrity using the verifier at the bottom of the Dashboard page.
+            </p>
+          </details>
+
+          <details style="margin-top: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; cursor: pointer;">
+            <summary style="font-size: 0.8rem; font-weight: 700; color: #fff;">How long do deposits and withdrawals take?</summary>
+            <p style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 6px; cursor: default;">
+              Deposits process instantly. Withdrawals to UPI, Paytm, or Bank Accounts are simulated in sandbox mode and process immediately upon request submission.
+            </p>
+          </details>
+        </div>
+
+        <hr class="section-divider" style="margin: 20px 0; border: none; border-top: 1px solid rgba(255, 255, 255, 0.08);" />
+
+        <!-- Feedback ticket form -->
+        <div class="profile-section">
+          <h4>💬 Submit Help Desk Message</h4>
+          @if (supportSuccess) {
+            <div class="alert-box alert-success"><span>{{ supportSuccess }}</span></div>
+          }
+          <form (ngSubmit)="onSubmitSupport()">
+            <textarea class="form-input mt-2" rows="4" [(ngModel)]="supportMessage" name="supportMessage" placeholder="Describe your issue or query here..." required></textarea>
+            <button type="submit" class="btn-cyan w-full mt-4">Submit Query</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+}

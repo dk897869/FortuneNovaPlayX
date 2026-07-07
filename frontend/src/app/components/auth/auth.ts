@@ -29,6 +29,7 @@ export class Auth implements AfterViewInit {
   protected successMessage = '';
   protected googleLoaded = false;
   protected isSubmitting = false;
+  protected referralCode = '';
 
   // Login via Email OTP states
   protected isOtpLogin = false;
@@ -57,6 +58,9 @@ export class Auth implements AfterViewInit {
       if (verifyToken) {
         this.verifyEmailToken(verifyToken);
       }
+      if (params['ref']) {
+        this.referralCode = params['ref'];
+      }
     });
   }
 
@@ -76,7 +80,7 @@ export class Auth implements AfterViewInit {
     }
 
     if (this.isRegister) {
-      this.authService.register(this.email, this.password, this.phone).subscribe({
+      this.authService.register(this.email, this.password, this.phone, this.referralCode).subscribe({
         next: (res) => {
           this.successMessage = 'Registration successful! Verification OTP sent.';
           this.isOtpStep = true;
@@ -158,7 +162,9 @@ export class Auth implements AfterViewInit {
       name: `${providerName} Player`,
       id: randomId,
       provider: provider,
-      token: `mock_oauth_jwt_token_${randomId}`
+      token: `mock_oauth_jwt_token_${randomId}`,
+      isSignup: this.isRegister,
+      ref: this.referralCode
     };
 
     this.authService.socialLogin(mockSocialData).subscribe({
@@ -216,7 +222,9 @@ export class Auth implements AfterViewInit {
       name: '',
       id: '',
       provider: 'google',
-      token: idToken
+      token: idToken,
+      isSignup: this.isRegister,
+      ref: this.referralCode
     }).subscribe({
       next: (res) => {
         this.successMessage = 'Successfully authenticated via Google!';

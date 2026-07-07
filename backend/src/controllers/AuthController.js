@@ -132,12 +132,25 @@ exports.register = async (req, res) => {
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     const verificationToken = crypto.randomBytes(32).toString('hex');
 
-    // 1. Create user with 1000 coins starting balance
+    // Parse referral code
+    const { ref } = req.body;
+    let startingBalance = 1000.0;
+    let referrerUser = null;
+
+    if (ref) {
+      referrerUser = await User.findOne({ referralCode: ref.trim().toUpperCase() });
+      if (referrerUser) {
+        startingBalance = 3000.0; // 1000 signup + 2000 referral bonus
+      }
+    }
+
+    // 1. Create user
     const user = new User({
       email,
       password: hashedPassword,
       phone: phone || '',
-      balance: 1000.0,
+      balance: startingBalance,
+      referredBy: referrerUser ? referrerUser._id : null,
       otp: {
         code: otpCode,
         expiresAt: otpExpiry,
@@ -148,7 +161,7 @@ exports.register = async (req, res) => {
 
     await user.save();
 
-    // 2. Add signup reward ledger entry (immutable)
+    // 2. Add signup reward ledger entry (1,000 Coins)
     const ledger = new Ledger({
       userId: user._id,
       amount: 1000.0,
@@ -157,6 +170,31 @@ exports.register = async (req, res) => {
       resultingBalance: 1000.0
     });
     await ledger.save();
+
+    // 3. Add referral reward ledger for referee if referred
+    if (referrerUser) {
+      const refereeReferralLedger = new Ledger({
+        userId: user._id,
+        amount: 2000.0,
+        type: 'reward',
+        game: 'referral_reward',
+        resultingBalance: startingBalance
+      });
+      await refereeReferralLedger.save();
+
+      // Credit the referrer
+      referrerUser.balance += 2000.0;
+      await referrerUser.save();
+
+      const referrerLedger = new Ledger({
+        userId: referrerUser._id,
+        amount: 2000.0,
+        type: 'reward',
+        game: 'referral_reward',
+        resultingBalance: referrerUser.balance
+      });
+      await referrerLedger.save();
+    }
 
     // 3. Dispatch verification link & OTP
     const verifyLink = `http://localhost:4200/auth?verifyToken=${verificationToken}`;
@@ -197,7 +235,9 @@ exports.register = async (req, res) => {
         email: user.email,
         phone: user.phone,
         balance: user.balance,
-        otpVerified: user.otp.verified
+        otpVerified: user.otp.verified,
+        avatar: user.avatar || 'avatar-ninja',
+        referralCode: user.referralCode
       }
     });
   } catch (error) {
@@ -232,7 +272,8 @@ exports.login = async (req, res) => {
         phone: user.phone,
         balance: user.balance,
         otpVerified: user.otp.verified,
-        avatar: user.avatar || 'avatar-ninja'
+        avatar: user.avatar || 'avatar-ninja',
+        referralCode: user.referralCode
       }
     });
   } catch (error) {
@@ -306,7 +347,7 @@ exports.resendOtp = async (req, res) => {
 // Social login handles simulated/mock OAuth2 requests (production-ready stubbing)
 exports.socialLogin = async (req, res) => {
   try {
-    const { email, name, id, provider, token: socialToken } = req.body;
+    const { email, name, id, provider, token: socialToken, isSignup, ref } = req.body;
     
     let emailAddress = email;
     let socialId = id;
@@ -342,10 +383,25 @@ exports.socialLogin = async (req, res) => {
     let user = await User.findOne({ email: emailAddress });
 
     if (!user) {
+      if (!isSignup) {
+        return res.status(400).json({ error: 'Email not registered. Please sign up using Google first before attempting to log in.' });
+      }
+
+      // Check referral
+      let startingBalance = 1000.0;
+      let referrerUser = null;
+      if (ref) {
+        referrerUser = await User.findOne({ referralCode: ref.trim().toUpperCase() });
+        if (referrerUser) {
+          startingBalance = 3000.0;
+        }
+      }
+
       // Create user if not exists
       user = new User({
         email: emailAddress,
-        balance: 1000.0,
+        balance: startingBalance,
+        referredBy: referrerUser ? referrerUser._id : null,
         otp: { verified: true } // Auto-verify social users
       });
       if (provider === 'google') user.googleId = socialId;
@@ -362,6 +418,31 @@ exports.socialLogin = async (req, res) => {
         resultingBalance: 1000.0
       });
       await ledger.save();
+
+      // Referral ledger and credit referrer
+      if (referrerUser) {
+        const refereeReferralLedger = new Ledger({
+          userId: user._id,
+          amount: 2000.0,
+          type: 'reward',
+          game: 'referral_reward',
+          resultingBalance: startingBalance
+        });
+        await refereeReferralLedger.save();
+
+        // Credit the referrer
+        referrerUser.balance += 2000.0;
+        await referrerUser.save();
+
+        const referrerLedger = new Ledger({
+          userId: referrerUser._id,
+          amount: 2000.0,
+          type: 'reward',
+          game: 'referral_reward',
+          resultingBalance: referrerUser.balance
+        });
+        await referrerLedger.save();
+      }
     } else {
       // Update social identity association if needed
       let changed = false;
@@ -388,7 +469,8 @@ exports.socialLogin = async (req, res) => {
         phone: user.phone,
         balance: user.balance,
         otpVerified: user.otp.verified,
-        avatar: user.avatar || 'avatar-ninja'
+        avatar: user.avatar || 'avatar-ninja',
+        referralCode: user.referralCode
       }
     });
   } catch (error) {
@@ -494,7 +576,8 @@ exports.loginOtpVerify = async (req, res) => {
         phone: user.phone,
         balance: user.balance,
         otpVerified: user.otp.verified,
-        avatar: user.avatar || 'avatar-ninja'
+        avatar: user.avatar || 'avatar-ninja',
+        referralCode: user.referralCode
       }
     });
   } catch (error) {
@@ -537,7 +620,8 @@ exports.updateProfile = async (req, res) => {
         phone: user.phone,
         balance: user.balance,
         otpVerified: user.otp.verified,
-        avatar: user.avatar
+        avatar: user.avatar,
+        referralCode: user.referralCode
       }
     });
   } catch (error) {
@@ -574,6 +658,21 @@ exports.changePassword = async (req, res) => {
     await user.save();
 
     res.json({ message: 'Password changed successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Delete Profile
+exports.deleteProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    await User.findByIdAndDelete(req.user._id);
+    res.json({ message: 'Your account has been deleted successfully.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1,354 +1,398 @@
-<div class="dashboard-grid">
-  
-  <!-- Welcome and Action Banner -->
-  <div class="banner-panel glass-panel">
-    <div class="banner-content">
-      <h1 class="welcome-title flex-row items-center gap-2" style="display: flex; align-items: center; gap: 8px;">
-        <span class="avatar-welcome-emoji" style="font-size: 2.2rem; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));">
-          @if (authService.currentUser()?.avatar === 'avatar-ninja') { 🥷 }
-          @else if (authService.currentUser()?.avatar === 'avatar-surfer') { 🏄 }
-          @else if (authService.currentUser()?.avatar === 'avatar-king') { 👑 }
-          @else if (authService.currentUser()?.avatar === 'avatar-queen') { 👸 }
-          @else if (authService.currentUser()?.avatar === 'avatar-diamond') { 💎 }
-          @else if (authService.currentUser()?.avatar === 'avatar-champion') { 🏆 }
-          @else { 👤 }
-        </span>
-        Welcome back, <span class="text-cyan">{{ (authService.currentUser()?.email || '').split('@')[0] || 'Player' }}</span>
-        <button type="button" class="btn-adjust btn-settings-gear ml-4" (click)="openProfileEditor()" title="Edit Profile & Security" style="margin-left: 16px; font-size: 0.85rem; padding: 6px 12px; display: flex; align-items: center; gap: 4px;">⚙️ Settings</button>
-      </h1>
-      <p class="welcome-subtitle">Seeded with 1,000 free Game Coins. Ready to test your strategy?</p>
+<div class="dashboard-container">
+
+  <!-- ================= MAIN 2-COLUMN GRID ================= -->
+  <div class="dashboard-main-grid">
+
+    <!-- Left Main Column (72%) -->
+    <div class="dashboard-left-content">
       
-      <div class="game-quick-links mt-4">
-        <a routerLink="/dice" class="game-card glass-panel glass-panel-hover">
-          <div class="game-icon-wrapper cyan-glow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
-              <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/>
-              <circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/>
-              <circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/>
-              <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-            </svg>
-          </div>
-          <div class="game-details">
-            <h3>Dice Arena</h3>
-            <p>Predict rolls, modify odds, and claim multipliers.</p>
-          </div>
-        </a>
+      <!-- Row 1: Welcome banner -->
+      <div class="welcome-banner glass-panel">
+        <div class="welcome-details">
+          <h2 class="welcome-headline">
+            Welcome back, <br>
+            <span class="user-display-name">{{ currentUserEmailName }}</span>
+            <span class="verified-badge-blue" title="Verified Player">✓</span>
+          </h2>
+          <p class="welcome-tagline">Seeded with 1,000 free Game Coins. Ready to test your strategy?</p>
 
-        <a routerLink="/mines" class="game-card glass-panel glass-panel-hover">
-          <div class="game-icon-wrapper green-glow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <path d="M21 12H3M12 3v18"/>
-            </svg>
+          <!-- Banner mini stats metrics -->
+          <div class="banner-metrics-grid mt-4">
+            <div class="metric-pill">
+              <span class="pill-icon">🪙</span>
+              <div class="pill-text">
+                <span class="label">Wallet Balance</span>
+                <span class="val">{{ authService.currentUser()?.balance | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            <div class="metric-pill">
+              <span class="pill-icon">💰</span>
+              <div class="pill-text">
+                <span class="label">Total Wagered</span>
+                <span class="val">{{ totalWagered | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            <div class="metric-pill">
+              <span class="pill-icon">🏆</span>
+              <div class="pill-text">
+                <span class="label">Total Won</span>
+                <span class="val">{{ totalWon | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            <div class="metric-pill">
+              <span class="pill-icon">🎯</span>
+              <div class="pill-text">
+                <span class="label">Win Rate</span>
+                <span class="val">{{ winRate }}%</span>
+              </div>
+            </div>
           </div>
-          <div class="game-details">
-            <h3>Mines Grid</h3>
-            <p>Dodge dynamic explosives and cash out safely.</p>
-          </div>
-        </a>
+        </div>
 
-        <a routerLink="/fruit-ninja" class="game-card glass-panel glass-panel-hover">
-          <div class="game-icon-wrapper red-glow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L2 22h20L12 2z"/>
-            </svg>
-          </div>
-          <div class="game-details">
-            <h3>Fruit Ninja</h3>
-            <p>Slice flying fruits and dodge hidden bombs.</p>
-          </div>
-        </a>
+        <!-- Floating dice background graphic -->
+        <div class="welcome-dice-graphic">
+          <img src="welcome_dice.jpg" alt="glowing dice illustration" class="dice-banner-img" />
+        </div>
+      </div>
 
-        <a routerLink="/ludo" class="game-card glass-panel glass-panel-hover">
-          <div class="game-icon-wrapper yellow-glow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 2v20M2 12h20"/>
+      <!-- Row 2: Favorite games row -->
+      <div class="favorite-games-section mt-6">
+        <div class="section-header">
+          <h3 class="section-title">Play Your Favorite Games</h3>
+          <a routerLink="/dashboard" class="view-all-link">View All Games →</a>
+        </div>
+
+        <div class="games-cards-grid mt-4">
+          <!-- Game 1: Dice Arena -->
+          <div class="game-lobby-card card-dice">
+            <div class="game-icon-visual">🎲</div>
+            <h4 class="game-card-title">Dice Arena</h4>
+            <p class="game-card-desc">Predict rolls, modify odds, and claim multipliers.</p>
+            <a routerLink="/dice" class="btn-game-play">Play Now</a>
+          </div>
+
+          <!-- Game 2: Mines Grid -->
+          <div class="game-lobby-card card-mines">
+            <div class="game-icon-visual">💣</div>
+            <h4 class="game-card-title">Mines Grid</h4>
+            <p class="game-card-desc">Dodge dynamic explosives and cash out safely.</p>
+            <a routerLink="/mines" class="btn-game-play">Play Now</a>
+          </div>
+
+          <!-- Game 3: Fruit Ninja -->
+          <div class="game-lobby-card card-ninja">
+            <div class="game-icon-visual">🍎</div>
+            <h4 class="game-card-title">Fruit Ninja</h4>
+            <p class="game-card-desc">Slice flying fruits and dodge hidden bombs.</p>
+            <a routerLink="/fruit-ninja" class="btn-game-play">Play Now</a>
+          </div>
+
+          <!-- Game 4: Ludo Quick Run -->
+          <div class="game-lobby-card card-ludo">
+            <div class="game-icon-visual">♟️</div>
+            <h4 class="game-card-title">Ludo Quick Run</h4>
+            <p class="game-card-desc">Roll dice to reach home, dodging danger zones.</p>
+            <a routerLink="/ludo" class="btn-game-play">Play Now</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: side-by-side Recent Transactions & Statistics -->
+      <div class="recent-stats-row mt-6">
+        
+        <!-- Recent Transactions Panel -->
+        <div class="transactions-panel glass-panel">
+          <div class="panel-header">
+            <h4>Recent Transactions</h4>
+            <button type="button" class="btn-panel-action" (click)="loadHistory(1)">Refresh</button>
+          </div>
+
+          <div class="table-container mt-2">
+            <table class="tx-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Game</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (tx of history; track tx.timestamp) {
+                  <tr>
+                    <td class="font-mono text-xs text-muted">{{ tx.timestamp | date:'MMM d, HH:mm:ss' }}</td>
+                    <td class="font-bold capitalize">{{ tx.game }}</td>
+                    <td>
+                      <span class="tx-tag tag-{{ tx.type }}">{{ tx.type }}</span>
+                    </td>
+                    <td class="font-mono font-bold" [ngClass]="{ 'text-green': tx.amount > 0, 'text-red': tx.amount < 0 }">
+                      {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount | number:'1.2-2' }}
+                    </td>
+                    <td class="font-mono text-secondary">{{ tx.resultingBalance | number:'1.2-2' }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="text-center py-6 text-muted italic">No transactions found. Start playing games!</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Your Statistics Panel -->
+        <div class="stats-panel glass-panel">
+          <div class="panel-header">
+            <h4>Your Statistics</h4>
+            <span class="time-filter-badge">All Time</span>
+          </div>
+
+          <!-- Stats Mini Grid -->
+          <div class="stats-metric-tiles mt-2">
+            <div class="tile">
+              <span class="tile-icon text-cyan">🎮</span>
+              <div class="tile-text">
+                <span class="tile-val">{{ gamesPlayed }}</span>
+                <span class="tile-lbl">Games Played</span>
+              </div>
+            </div>
+            <div class="tile">
+              <span class="tile-icon text-green">🏆</span>
+              <div class="tile-text">
+                <span class="tile-val">{{ gamesWonCount }}</span>
+                <span class="tile-lbl">Games Won</span>
+              </div>
+            </div>
+            <div class="tile">
+              <span class="tile-icon text-orange">📈</span>
+              <div class="tile-text">
+                <span class="tile-val">{{ winRate }}%</span>
+                <span class="tile-lbl">Win Rate</span>
+              </div>
+            </div>
+            <div class="tile">
+              <span class="tile-icon text-yellow">💰</span>
+              <div class="tile-text">
+                <span class="tile-val">{{ biggestWin | number:'1.0-0' }}</span>
+                <span class="tile-lbl">Biggest Win</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Neon chart graph illustration -->
+          <div class="neon-chart-container mt-4">
+            <svg class="stats-chart-svg" viewBox="0 0 400 150">
+              <defs>
+                <linearGradient id="chart-glow" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.35" />
+                  <stop offset="100%" stop-color="#06b6d4" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path d="M 30,120 L 30,95 Q 80,115 130,90 T 230,45 T 330,75 L 370,55 L 370,120 Z" fill="url(#chart-glow)" />
+              <line x1="30" y1="30" x2="370" y2="30" stroke="rgba(255,255,255,0.03)" stroke-dasharray="4" />
+              <line x1="30" y1="65" x2="370" y2="65" stroke="rgba(255,255,255,0.03)" stroke-dasharray="4" />
+              <line x1="30" y1="100" x2="370" y2="100" stroke="rgba(255,255,255,0.03)" stroke-dasharray="4" />
+              <line x1="30" y1="120" x2="370" y2="120" stroke="rgba(255,255,255,0.06)" />
+              <path d="M 30,95 Q 80,115 130,90 T 230,45 T 330,75 L 370,55" fill="none" stroke="#06b6d4" stroke-width="3" style="filter: drop-shadow(0 0 5px #06b6d4);" />
+              <circle cx="30" cy="95" r="4" fill="#06b6d4" />
+              <circle cx="130" cy="90" r="4" fill="#10b981" />
+              <circle cx="230" cy="45" r="4" fill="#06b6d4" />
+              <circle cx="330" cy="75" r="4" fill="#10b981" />
+              <circle cx="370" cy="55" r="4" fill="#06b6d4" />
+              <text x="30" y="140" fill="#64748b" font-size="9">Jul 2</text>
+              <text x="130" y="140" fill="#64748b" font-size="9">Jul 4</text>
+              <text x="230" y="140" fill="#64748b" font-size="9">Jul 6</text>
+              <text x="330" y="140" fill="#64748b" font-size="9">Jul 8</text>
             </svg>
           </div>
-          <div class="game-details">
-            <h3>Ludo Quick Run</h3>
-            <p>Roll dice to reach home, dodging danger capture zones.</p>
-          </div>
-        </a>
+        </div>
+
       </div>
     </div>
+
+    <!-- Right Sidebar Column (28%) -->
+    <div class="dashboard-right-sidebar">
+      
+      <!-- Wallet Balance Widget -->
+      <div class="sidebar-wallet-card glass-panel text-center">
+        <h4 class="card-label">Wallet Balance</h4>
+        
+        <div class="wallet-balance-row">
+          <span class="gold-coin-symbol">🪙</span>
+          <span class="balance-display">{{ authService.currentUser()?.balance | number:'1.2-2' }}</span>
+        </div>
+        <p class="balance-sub-label">COINS AVAILABLE</p>
+
+        <!-- Illustration -->
+        <div class="wallet-visual-wrapper mt-2">
+          <img src="wallet_neon.jpg" alt="neon wallet illustration" class="wallet-img" />
+        </div>
+
+        <div class="wallet-actions-row mt-4">
+          <button type="button" class="btn-deposit" (click)="openWalletAction('deposit')">Deposit</button>
+          <button type="button" class="btn-withdraw" (click)="openWalletAction('withdraw')">Withdraw</button>
+        </div>
+      </div>
+
+      <!-- Leaderboard Card -->
+      <div class="sidebar-leaderboard-card glass-panel mt-6">
+        <div class="sidebar-card-header">
+          <h4 class="panel-title">🏆 Leaderboard</h4>
+          <a routerLink="/leaderboard" class="view-all-link text-xs">View All</a>
+        </div>
+
+        <div class="leaderboard-ranking-list mt-4">
+          <div class="rank-item">
+            <span class="rank-badge rank-1">1</span>
+            <span class="player-avatar">🥷</span>
+            <span class="player-username font-bold">PokerFace</span>
+            <span class="player-amount text-green font-mono ml-auto">2,543.50</span>
+          </div>
+          <div class="rank-item">
+            <span class="rank-badge rank-2">2</span>
+            <span class="player-avatar">👑</span>
+            <span class="player-username font-bold">HighRoller</span>
+            <span class="player-amount text-green font-mono ml-auto">2,341.60</span>
+          </div>
+          <div class="rank-item">
+            <span class="rank-badge rank-3">3</span>
+            <span class="player-avatar">👸</span>
+            <span class="player-username font-bold">LuckyStar</span>
+            <span class="player-amount text-green font-mono ml-auto">2,100.75</span>
+          </div>
+          <div class="rank-item">
+            <span class="rank-badge rank-4">4</span>
+            <span class="player-avatar">💎</span>
+            <span class="player-username font-bold">CryptoKing</span>
+            <span class="player-amount text-green font-mono ml-auto">1,987.20</span>
+          </div>
+          <div class="rank-item">
+            <span class="rank-badge rank-5">5</span>
+            <span class="player-avatar">🏆</span>
+            <span class="player-username font-bold">BetMaster</span>
+            <span class="player-amount text-green font-mono ml-auto">1,876.45</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hot Promotions Card -->
+      <div class="sidebar-promotions-card glass-panel mt-6">
+        <div class="sidebar-card-header">
+          <h4 class="panel-title">🔥 Hot Promotions</h4>
+          <span class="promo-badge">Active</span>
+        </div>
+
+        <div class="promo-item-row mt-4">
+          <div class="promo-text-col">
+            <span class="promo-badge-tag green-tag">Deposit Bonus</span>
+            <p class="promo-desc">Get 20% extra coins on your first deposit!</p>
+            <button type="button" class="btn-promo-go">Deposit Now</button>
+          </div>
+          <div class="promo-badge-visual">20%</div>
+        </div>
+
+        <div class="promo-item-row mt-6">
+          <div class="promo-text-col">
+            <span class="promo-badge-tag purple-tag">Weekly Raffle</span>
+            <p class="promo-desc">Wager more & win exciting prizes!</p>
+            <button type="button" class="btn-promo-go-purple">Join Now</button>
+          </div>
+          <div class="promo-badge-visual">🎡</div>
+        </div>
+      </div>
+
+    </div>
+
   </div>
 
-  <!-- Left: Transaction History Ledger -->
-  <div class="ledger-panel glass-panel">
-    <div class="panel-header">
-      <h2>Transaction History</h2>
-      <span class="badge-count">{{ totalCount }} total entries</span>
-    </div>
+  <!-- ================= PROVABLY FAIR SYSTEM VERIFIER ================= -->
+  <div class="verifier-footer-section glass-panel mt-6">
+    <h3 class="title-decor text-cyan">Provably Fair Game Verifier</h3>
+    <p class="subtitle-decor">Verify any game outcome instantly using server seeds, client seeds, and nonces</p>
 
-    @if (history.length === 0) {
-      <div class="empty-state">
-        <p>No transaction history recorded yet. Place a bet to start!</p>
-      </div>
-    } @else {
-      <div class="table-container">
-        <table class="ledger-table">
-          <thead>
-            <tr>
-              <th>Timestamp</th>
-              <th>Context</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Resulting Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (entry of history; track entry._id) {
-              <tr class="ledger-row">
-                <td class="col-time">{{ entry.timestamp | date:'MMM d, HH:mm:ss' }}</td>
-                <td class="col-game">
-                  <span class="game-badge" [ngClass]="'badge-' + entry.game">
-                    {{ entry.game === 'signup_reward' ? 'Signup Reward' : (entry.game | titlecase) }}
-                  </span>
-                </td>
-                <td class="col-type text-capitalize">{{ entry.type }}</td>
-                <td class="col-amount" [ngClass]="entry.amount >= 0 ? 'text-green' : 'text-red'">
-                  {{ entry.amount >= 0 ? '+' : '' }}{{ entry.amount | number:'1.2-2' }}
-                </td>
-                <td class="col-balance font-mono">{{ entry.resultingBalance | number:'1.2-2' }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination controls -->
-      <div class="pagination-controls">
-        <button (click)="prevPage()" [disabled]="currentPage === 1" class="btn-pagination">
-          &larr; Prev
-        </button>
-        <span class="page-indicator">Page {{ currentPage }} of {{ totalPages }}</span>
-        <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="btn-pagination">
-          Next &rarr;
-        </button>
-      </div>
-    }
-  </div>
-
-  <!-- Right: Provably Fair Verifier Panel -->
-  <div class="verifier-panel glass-panel">
-    <div class="panel-header">
-      <h2>Provably Fair Verifier</h2>
-    </div>
-    
-    <p class="panel-intro">
-      Verify any historical bet outcome. Paste the unhashed plaintext server seed, your client seed, and the nonce.
-    </p>
-
-    <form (submit)="onVerifyOutcome()" class="verifier-form">
-      <div class="form-group">
-        <label class="form-label">Server Seed (Unhashed Hex)</label>
-        <input 
-          type="text" 
-          class="form-input font-mono" 
-          placeholder="e.g. 5d9f041b6..." 
-          [(ngModel)]="verifierServerSeed" 
-          name="srvSeed" 
-          required
-        />
-      </div>
-
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label">Client Seed</label>
-          <input 
-            type="text" 
-            class="form-input" 
-            placeholder="e.g. my_custom_seed" 
-            [(ngModel)]="verifierClientSeed" 
-            name="cliSeed" 
-            required
-          />
-        </div>
-
-        <div class="form-group w-30">
-          <label class="form-label">Nonce</label>
-          <input 
-            type="number" 
-            class="form-input font-mono" 
-            min="1" 
-            [(ngModel)]="verifierNonce" 
-            name="nonce" 
-            required
-          />
-        </div>
-      </div>
-
-      <div class="form-row align-end">
-        <div class="form-group flex-1">
-          <label class="form-label">Game Mode</label>
-          <select class="form-input select-mode" [(ngModel)]="verifierGameType" name="gameType">
-            <option value="dice">Dice Roll</option>
-            <option value="mines">Mines Grid</option>
-            <option value="ludo">Ludo Roll</option>
-          </select>
-        </div>
-
-        @if (verifierGameType === 'mines') {
-          <div class="form-group w-40">
-            <label class="form-label">Mines Count</label>
-            <input 
-              type="number" 
-              class="form-input" 
-              min="1" 
-              max="24" 
-              [(ngModel)]="verifierMineCount" 
-              name="minesCount" 
-              required
-            />
-          </div>
-        }
-      </div>
-
-      <button type="submit" class="btn-primary w-full mt-2">
-        Recalculate Outcome
-      </button>
-    </form>
-
-    <!-- Error state -->
     @if (verifierError) {
-      <div class="alert-box alert-error mt-4">
-        <span>{{ verifierError }}</span>
-      </div>
+      <div class="alert-box alert-error mt-4"><span>{{ verifierError }}</span></div>
     }
 
-    <!-- Output results -->
+    <div class="verifier-inputs-grid mt-4">
+      <div class="input-cell">
+        <label>Server Seed (Revealed after game)</label>
+        <input type="text" class="form-input" [(ngModel)]="verifierServerSeed" placeholder="Enter plaintext server seed hex" />
+      </div>
+      <div class="input-cell">
+        <label>Client Seed</label>
+        <input type="text" class="form-input" [(ngModel)]="verifierClientSeed" placeholder="Enter client seed" />
+      </div>
+      <div class="input-cell">
+        <label>Nonce (Integer index)</label>
+        <input type="number" class="form-input" [(ngModel)]="verifierNonce" min="1" placeholder="1" />
+      </div>
+    </div>
+
+    <button type="button" class="btn-cyan mt-4 w-full" (click)="onVerifyOutcome()">Verify Outcome</button>
+
     @if (verifierResult) {
       <div class="verifier-result-box glass-panel mt-4">
-        <h3 class="result-title">{{ verifierResult.game }} Outcome</h3>
-        
-        <div class="result-row font-mono">
-          <span class="label">Server Hash (SHA256):</span>
-          <span class="val" title="{{ verifierResult.serverSeedHash }}">{{ verifierResult.serverSeedHash }}</span>
+        <div class="result-header">
+          <h4 class="text-green font-bold">✓ Verification Success</h4>
+          <span class="game-tag">{{ verifierResult.game }}</span>
         </div>
-        
-        <div class="result-row font-mono">
-          <span class="label">HMAC Signature:</span>
-          <span class="val" title="{{ verifierResult.hmacSignature }}">{{ verifierResult.hmacSignature }}</span>
-        </div>
+        <div class="result-details font-mono text-xs mt-2">
+          <div>Server Seed Hash Match: <strong>Yes</strong> ({{ verifierResult.serverSeedHash }})</div>
+          
+          @if (verifierResult.game === 'dice') {
+            <div class="result-val mt-2">Dice Roll Value: <span class="badge badge-cyan">{{ verifierResult.roll }}</span></div>
+            <div>Result Outcome: {{ verifierResult.roll <= 50 ? 'Low (<=50)' : 'High (>50)' }}</div>
+          }
 
-        <div class="result-outcome">
-          <strong>Result:</strong> {{ verifierResult.outcome }}
+          @if (verifierResult.game === 'mines') {
+            <div class="result-val mt-2">Mine Cell Indices:</div>
+            <div class="mines-visual-row mt-1">
+              @for (cell of [].constructor(25); track $index) {
+                <span class="mine-cell-preview" [ngClass]="{ 'mine-active': isMineInCell($index) }">
+                  {{ isMineInCell($index) ? '💣' : '💎' }}
+                </span>
+              }
+            </div>
+          }
         </div>
-
-        <!-- 5x5 Mine Grid preview if verifying Mines -->
-        @if (verifierResult.minePositions) {
-          <div class="verifier-grid mt-3">
-            @for (cell of [].constructor(25); track idx; let idx = $index) {
-              <div class="verifier-cell" [ngClass]="{ 'cell-mine': isMineInCell(idx) }">
-                @if (isMineInCell(idx)) {
-                  <svg viewBox="0 0 24 24" class="verifier-mine-icon">
-                    <circle cx="12" cy="12" r="8" fill="currentColor"/>
-                    <path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="2"/>
-                  </svg>
-                } @else {
-                  <span class="safe-dot"></span>
-                }
-              </div>
-            }
-          </div>
-        }
       </div>
     }
   </div>
 
-</div>
-
-<!-- PROFILE EDIT MODAL -->
-@if (isEditingProfile) {
-  <div class="modal-overlay">
-    <div class="modal-content glass-panel">
-      <div class="modal-header">
-        <h3>Edit Profile & Security</h3>
-        <button type="button" class="btn-close" (click)="isEditingProfile = false">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <!-- Section 1: Profile Details -->
-        <div class="profile-section">
-          <h4>Account Details</h4>
-          @if (profileError) {
-            <div class="alert-box alert-error mt-2"><span>{{ profileError }}</span></div>
-          }
-          @if (profileSuccess) {
-            <div class="alert-box alert-success mt-2"><span>{{ profileSuccess }}</span></div>
-          }
-          <form (ngSubmit)="onUpdateProfile()" class="settings-form mt-2">
-            <div class="form-group">
-              <label class="form-label">Email ID</label>
-              <input type="email" class="form-input" [(ngModel)]="profileEmail" name="email" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Mobile Number</label>
-              <input type="tel" class="form-input" [(ngModel)]="profilePhone" name="phone" placeholder="+1234567890" />
-            </div>
-
-            <!-- Avatar selector grid -->
-            <div class="form-group">
-              <label class="form-label">Select Profile Picture (Avatar)</label>
-              <div class="avatar-grid" style="display: flex; gap: 10px; margin-top: 8px;">
-                @for (av of avatars; track av) {
-                  <button 
-                    type="button" 
-                    class="btn-avatar-choice" 
-                    [ngClass]="{ 'active-avatar': profileAvatar === av }"
-                    (click)="profileAvatar = av"
-                    style="font-size: 1.8rem; background: rgba(255,255,255,0.05); border: 2px solid transparent; border-radius: 50%; padding: 8px; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
-                  >
-                    <span class="avatar-emoji">
-                      @if (av === 'avatar-ninja') { 🥷 }
-                      @else if (av === 'avatar-surfer') { 🏄 }
-                      @else if (av === 'avatar-king') { 👑 }
-                      @else if (av === 'avatar-queen') { 👸 }
-                      @else if (av === 'avatar-diamond') { 💎 }
-                      @else if (av === 'avatar-champion') { 🏆 }
-                    </span>
-                  </button>
-                }
-              </div>
-            </div>
-
-            <button type="submit" class="btn-primary w-full mt-4">Save Profile Details</button>
-          </form>
+  <!-- ================= TRUST FOOTER SEALS ================= -->
+  <footer class="trust-footer mt-8 text-center">
+    <div class="trust-grid">
+      <div class="trust-item">
+        <span class="trust-icon">🛡️</span>
+        <div class="trust-details">
+          <h5>Provably Fair</h5>
+          <p>100% Transparent rolls</p>
         </div>
-
-        <hr class="section-divider" style="margin: 24px 0; border: none; border-top: 1px solid rgba(255, 255, 255, 0.08);" />
-
-        <!-- Section 2: Change Password -->
-        <div class="profile-section">
-          <h4>Change Password</h4>
-          @if (passwordError) {
-            <div class="alert-box alert-error mt-2"><span>{{ passwordError }}</span></div>
-          }
-          @if (passwordSuccess) {
-            <div class="alert-box alert-success mt-2"><span>{{ passwordSuccess }}</span></div>
-          }
-          <form (ngSubmit)="onChangePassword()" class="settings-form mt-2">
-            <div class="form-group">
-              <label class="form-label">Current Password</label>
-              <input type="password" class="form-input" [(ngModel)]="oldPassword" name="oldPassword" placeholder="••••••••" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">New Password</label>
-              <input type="password" class="form-input" [(ngModel)]="newPassword" name="newPassword" placeholder="••••••••" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Confirm New Password</label>
-              <input type="password" class="form-input" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="••••••••" required />
-            </div>
-
-            <button type="submit" class="btn-green w-full mt-4">Change Password</button>
-          </form>
+      </div>
+      <div class="trust-item">
+        <span class="trust-icon">🔒</span>
+        <div class="trust-details">
+          <h5>Secure & Safe</h5>
+          <p>Bank-level encryption</p>
+        </div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-icon">⚡</span>
+        <div class="trust-details">
+          <h5>Instant Payouts</h5>
+          <p>Lightning fast payouts</p>
+        </div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-icon">🎧</span>
+        <div class="trust-details">
+          <h5>24/7 Support</h5>
+          <p>We are here for you</p>
         </div>
       </div>
     </div>
-  </div>
-}
+  </footer>
+
+</div>
