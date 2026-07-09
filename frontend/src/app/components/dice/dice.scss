@@ -1,3 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap');
+
+$ludo-red: #E63946;
+$ludo-yellow: #FFD60A;
+$ludo-green: #06D6A0;
+$ludo-blue: #3A86FF;
+$game-font: 'Baloo 2', var(--font-display), sans-serif;
+
 .game-container {
   display: grid;
   grid-template-columns: 320px 1fr;
@@ -9,12 +17,50 @@
   padding: 24px;
 }
 
-.panel-title {
-  font-size: 1.3rem;
-  color: var(--text-primary);
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   padding-bottom: 12px;
+}
+
+.btn-back {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  svg { width: 18px; height: 18px; }
+
+  &:hover {
+    background: rgba(58, 134, 255, 0.15);
+    border-color: $ludo-blue;
+    color: #fff;
+    transform: translateX(-2px);
+  }
+}
+
+.panel-title {
+  font-family: $game-font;
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: linear-gradient(90deg, $ludo-red, $ludo-yellow, $ludo-green, $ludo-blue);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 // --- Sidebar Control Panel ---
@@ -28,8 +74,8 @@
   transition: all 0.2s ease;
 
   &:focus-within {
-    border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px var(--primary-cyan-glow);
+    border-color: $ludo-blue;
+    box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.25);
   }
 
   .bet-input {
@@ -37,7 +83,7 @@
     background: transparent;
     padding-right: 12px;
     width: 60%;
-    
+
     &:focus {
       box-shadow: none;
       background: transparent;
@@ -60,9 +106,7 @@
       cursor: pointer;
       transition: all 0.2s ease;
 
-      &:last-child {
-        border-right: none;
-      }
+      &:last-child { border-right: none; }
 
       &:hover:not(:disabled) {
         background: rgba(255, 255, 255, 0.06);
@@ -82,12 +126,71 @@
   height: 16px;
 }
 
+.dir-over {
+  border-color: rgba(230, 57, 70, 0.35);
+  color: $ludo-red;
+}
+
+.dir-under {
+  border-color: rgba(6, 214, 160, 0.35);
+  color: $ludo-green;
+}
+
 // --- Right Board Arena Panel ---
 .board-panel {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.board-corner {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  opacity: 0.12;
+  pointer-events: none;
+  filter: blur(2px);
+}
+
+.corner-red    { top: -20px; left: -20px; background: $ludo-red;    border-radius: 0 0 100% 0; }
+.corner-yellow { top: -20px; right: -20px; background: $ludo-yellow; border-radius: 0 0 0 100%; }
+.corner-blue   { bottom: -20px; left: -20px; background: $ludo-blue;  border-radius: 0 100% 0 0; }
+.corner-green  { bottom: -20px; right: -20px; background: $ludo-green; border-radius: 100% 0 0 0; }
+
+// --- Pip Die (rolling animation) ---
+.dice-cube {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4px;
+  padding: 8px;
+  background: linear-gradient(145deg, #ffffff, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  animation: dice-bounce 0.4s ease-in-out infinite alternate;
+
+  .pip {
+    border-radius: 50%;
+    background: transparent;
+    align-self: center;
+    justify-self: center;
+    width: 9px;
+    height: 9px;
+
+    &.active {
+      background: radial-gradient(circle at 35% 35%, #334155, #0f172a);
+    }
+  }
+}
+
+@keyframes dice-bounce {
+  from { transform: translateY(0) rotate(-6deg); }
+  to   { transform: translateY(-8px) rotate(6deg); }
 }
 
 // --- Roll Gauge ---
@@ -95,42 +198,60 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 30px 0;
+  margin: 18px 0 30px;
+}
+
+.roll-gauge-ring {
+  width: 196px;
+  height: 196px;
+  border-radius: 50%;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(from 0deg, $ludo-red 0% 25%, $ludo-yellow 25% 50%, $ludo-green 50% 75%, $ludo-blue 75% 100%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  transition: box-shadow 0.4s ease;
+
+  &.spinning {
+    animation: spin-ring 1s linear infinite;
+  }
+}
+
+@keyframes spin-ring {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 .roll-gauge-outer {
-  width: 180px;
-  height: 180px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
-  border: 4px solid rgba(255, 255, 255, 0.05);
+  background: radial-gradient(circle, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 4px solid rgba(15, 23, 42, 1);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 
   &.cyan-glow {
-    border-color: var(--primary-cyan);
     box-shadow: 0 0 35px var(--primary-cyan-glow);
   }
 
   &.green-glow {
-    border-color: var(--primary-green);
     box-shadow: 0 0 35px var(--primary-green-glow);
     transform: scale(1.03);
   }
 
   &.red-glow {
-    border-color: var(--primary-red);
     box-shadow: 0 0 35px var(--primary-red-glow);
   }
 
   .roll-value {
-    font-family: var(--font-display);
-    font-size: 3.2rem;
+    font-family: $game-font;
+    font-size: 3rem;
     font-weight: 800;
     line-height: 1;
     letter-spacing: -0.03em;
@@ -164,9 +285,8 @@
   border-radius: 6px;
   outline: none;
   cursor: pointer;
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
 
-  // Custom Thumb styles
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -175,18 +295,18 @@
     border-radius: 50%;
     background: #f8fafc;
     border: 3px solid var(--bg-main);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5), 0 0 10px rgba(255,255,255,0.4);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 255, 255, 0.4);
     cursor: grab;
     transition: all 0.15s ease;
 
     &:hover {
       transform: scale(1.1);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.6), 0 0 15px rgba(255,255,255,0.6);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 255, 255, 0.6);
     }
-    
+
     &:active {
       cursor: grabbing;
-      background: var(--primary-cyan);
+      background: $ludo-blue;
     }
   }
 
@@ -196,13 +316,13 @@
     border-radius: 50%;
     background: #f8fafc;
     border: 3px solid var(--bg-main);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     cursor: grab;
     transition: all 0.15s ease;
-    
+
     &:active {
       cursor: grabbing;
-      background: var(--primary-cyan);
+      background: $ludo-blue;
     }
   }
 }
@@ -235,6 +355,10 @@
     flex-direction: column;
     align-items: center;
     border-radius: 10px;
+    border-top: 3px solid transparent;
+    transition: transform 0.2s ease;
+
+    &:hover { transform: translateY(-2px); }
 
     .label {
       font-size: 0.72rem;
@@ -246,11 +370,15 @@
     }
 
     .value {
-      font-size: 1.1rem;
+      font-family: $game-font;
+      font-size: 1.15rem;
       font-weight: 700;
-      font-family: var(--font-display);
     }
   }
+
+  .card-blue   { border-top-color: $ludo-blue; }
+  .card-yellow { border-top-color: $ludo-yellow; }
+  .card-green  { border-top-color: $ludo-green; }
 }
 
 // --- Fairness Panel ---
@@ -263,7 +391,7 @@
 
   h3 {
     font-size: 0.95rem;
-    color: var(--primary-cyan);
+    color: $ludo-blue;
     margin-bottom: 12px;
   }
 
@@ -273,7 +401,7 @@
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 6px;
-    
+
     .label {
       color: var(--text-muted);
       flex-shrink: 0;
@@ -303,4 +431,157 @@
   .slider-wrapper, .odds-info-grid, .fairness-panel {
     max-width: 100%;
   }
+}
+
+// --- DICE RESULT OVERLAY ---
+.dice-result-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  z-index: 20;
+  padding: 20px;
+  overflow: hidden;
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.confetti-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -20px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  animation-name: confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+  opacity: 0.95;
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(420px) rotate(540deg); opacity: 0; }
+}
+
+.dice-result-card {
+  width: 100%;
+  max-width: 340px;
+  padding: 24px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  position: relative;
+  z-index: 1;
+
+  &.result-win {
+    border-color: rgba(6, 214, 160, 0.45);
+    background: linear-gradient(135deg, rgba(6, 214, 160, 0.1) 0%, rgba(4, 120, 87, 0.18) 100%);
+    box-shadow: 0 0 25px rgba(6, 214, 160, 0.2), 0 15px 35px rgba(0, 0, 0, 0.6);
+
+    .result-title {
+      color: $ludo-green;
+      text-shadow: 0 0 10px rgba(6, 214, 160, 0.4);
+    }
+  }
+
+  &.result-loss {
+    border-color: rgba(230, 57, 70, 0.45);
+    background: linear-gradient(135deg, rgba(230, 57, 70, 0.1) 0%, rgba(153, 27, 27, 0.18) 100%);
+    box-shadow: 0 0 25px rgba(230, 57, 70, 0.2), 0 15px 35px rgba(0, 0, 0, 0.6);
+
+    .result-title {
+      color: $ludo-red;
+      text-shadow: 0 0 10px rgba(230, 57, 70, 0.4);
+    }
+  }
+}
+
+.result-title {
+  font-family: $game-font;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.result-coins {
+  font-family: $game-font;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.result-details {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 16px;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.result-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-outcome-action, .btn-outcome-back {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s;
+
+  &:hover { transform: translateY(-1px); }
+  &:active { transform: translateY(1px); }
+}
+
+.btn-outcome-action {
+  background: linear-gradient(135deg, $ludo-green 0%, #04a374 100%);
+  color: #06251d;
+  box-shadow: 0 4px 10px rgba(6, 214, 160, 0.35);
+
+  &:hover {
+    background: linear-gradient(135deg, #0ee6ae 0%, $ludo-green 100%);
+  }
+}
+
+.btn-outcome-back {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  border: 1px solid var(--border-glass);
+
+  &:hover {
+    background: rgba(58, 134, 255, 0.15);
+    border-color: $ludo-blue;
+  }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
 }

@@ -1,12 +1,21 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { GameService, DiceRollResponse } from '../../services/game';
 import { AuthService } from '../../services/auth';
 
+interface ConfettiPiece {
+  left: number;
+  delay: number;
+  duration: number;
+  color: string;
+  rotate: number;
+}
+
 @Component({
   selector: 'app-dice',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './dice.html',
   styleUrl: './dice.scss'
 })
@@ -29,12 +38,32 @@ export class Dice {
   protected rollResult: number | null = null;
   protected displayedRoll = 50.00;
   protected errorMessage = '';
-  
+  protected pipFace = 1;
+  protected confettiPieces: ConfettiPiece[] = [];
+
   // Last outcome details
   protected lastResult: DiceRollResponse | null = null;
 
+  // Ludo-style palette used for confetti bursts
+  private readonly confettiColors = ['#E63946', '#FFD60A', '#3A86FF', '#06D6A0', '#F72585'];
+
+  // Classic six-sided die pip layouts, mapped onto a 3x3 grid (cells 1-9)
+  private readonly pipLayouts: Record<number, number[]> = {
+    1: [5],
+    2: [1, 9],
+    3: [1, 5, 9],
+    4: [1, 3, 7, 9],
+    5: [1, 3, 5, 7, 9],
+    6: [1, 3, 4, 6, 7, 9]
+  };
+  protected readonly pipCells = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
   constructor() {
     this.recalculateOdds();
+  }
+
+  protected get activePips(): number[] {
+    return this.pipLayouts[this.pipFace] ?? [];
   }
 
   protected recalculateOdds(): void {
@@ -59,7 +88,6 @@ export class Dice {
 
   protected toggleCondition(): void {
     this.condition = this.condition === 'over' ? 'under' : 'over';
-    // Shift target to maintain default 50% chance if applicable
     if (this.condition === 'under' && this.target === 50.00) {
       this.target = 50.00;
     }
@@ -70,10 +98,11 @@ export class Dice {
     if (this.isRolling) return;
     this.errorMessage = '';
     this.rollResult = null;
+    this.confettiPieces = [];
 
     const user = this.authService.currentUser();
     if (!user) return;
-    
+
     if (this.betAmount <= 0) {
       this.errorMessage = 'Bet amount must be greater than zero.';
       return;
@@ -97,6 +126,7 @@ export class Dice {
         const duration = 1000; // 1 second duration
         const ticker = setInterval(() => {
           this.displayedRoll = Math.round((Math.random() * 99.99) * 100) / 100;
+          this.pipFace = Math.floor(Math.random() * 6) + 1;
           elapsed += 40;
           if (elapsed >= duration) {
             clearInterval(ticker);
@@ -104,6 +134,9 @@ export class Dice {
             this.rollResult = res.roll;
             this.lastResult = res;
             this.isRolling = false;
+            if (res.won) {
+              this.generateConfetti();
+            }
           }
         }, 40);
       },
@@ -112,6 +145,14 @@ export class Dice {
         this.errorMessage = err.error?.error || 'Roll failed.';
       }
     });
+  }
+
+  /** Resets the outcome card so the player can place a new bet. */
+  protected playAgain(): void {
+    this.lastResult = null;
+    this.rollResult = null;
+    this.errorMessage = '';
+    this.confettiPieces = [];
   }
 
   // Predefined short cuts for bet sizing
@@ -131,9 +172,19 @@ export class Dice {
   protected getSliderBackground(): string {
     const percent = this.target;
     if (this.condition === 'over') {
-      return `linear-gradient(to right, #ef4444 0%, #ef4444 ${percent}%, #10b981 ${percent}%, #10b981 100%)`;
+      return `linear-gradient(to right, #E63946 0%, #E63946 ${percent}%, #06D6A0 ${percent}%, #06D6A0 100%)`;
     } else {
-      return `linear-gradient(to right, #10b981 0%, #10b981 ${percent}%, #ef4444 ${percent}%, #ef4444 100%)`;
+      return `linear-gradient(to right, #06D6A0 0%, #06D6A0 ${percent}%, #E63946 ${percent}%, #E63946 100%)`;
     }
+  }
+
+  private generateConfetti(): void {
+    this.confettiPieces = Array.from({ length: 46 }, () => ({
+      left: Math.random() * 100,
+      delay: Math.random() * 0.5,
+      duration: 1.8 + Math.random() * 1.4,
+      color: this.confettiColors[Math.floor(Math.random() * this.confettiColors.length)],
+      rotate: Math.random() * 360
+    }));
   }
 }

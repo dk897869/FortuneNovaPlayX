@@ -32,28 +32,11 @@ export class Auth implements AfterViewInit {
   protected isSubmitting = false;
   protected referralCode = '';
 
-  // Login via Email OTP states
-  protected isOtpLogin = false;
-  protected isLoginOtpStep = false;
-
-  // OTP flow states
-  protected isOtpStep = false;
-  protected otpCode = '';
-  protected resendCooldown = 0;
-  private cooldownInterval: any;
-
   constructor() {
-    // If already logged in and verified, skip auth
     if (this.authService.isLoggedIn()) {
-      const user = this.authService.currentUser();
-      if (user && user.otpVerified) {
-        this.router.navigate(['/dashboard']);
-      } else if (user && !user.otpVerified) {
-        this.isOtpStep = true;
-      }
+      this.router.navigate(['/dashboard']);
     }
 
-    // Check for email verification token in query parameters
     this.route.queryParams.subscribe(params => {
       const verifyToken = params['verifyToken'];
       if (verifyToken) {
@@ -83,9 +66,10 @@ export class Auth implements AfterViewInit {
     if (this.isRegister) {
       this.authService.register(this.email, this.password, this.phone, this.referralCode).subscribe({
         next: (res) => {
-          this.successMessage = 'Registration successful! Verification OTP sent.';
-          this.isOtpStep = true;
-          this.startCooldown();
+          this.successMessage = 'Registration successful! Welcome to the arena.';
+          setTimeout(() => {
+            this.router.navigate(['/dashboard']);
+          }, 800);
         },
         error: (err) => {
           this.errorMessage = err.error?.error || 'Registration failed.';
@@ -94,13 +78,10 @@ export class Auth implements AfterViewInit {
     } else {
       this.authService.login(this.email, this.password).subscribe({
         next: (res) => {
-          if (res.user.otpVerified) {
+          this.successMessage = 'Login successful!';
+          setTimeout(() => {
             this.router.navigate(['/dashboard']);
-          } else {
-            this.successMessage = 'Please verify your identity. OTP sent.';
-            this.isOtpStep = true;
-            this.startCooldown();
-          }
+          }, 800);
         },
         error: (err) => {
           this.errorMessage = err.error?.error || 'Login failed.';
@@ -109,45 +90,7 @@ export class Auth implements AfterViewInit {
     }
   }
 
-  protected onVerifyOtp(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
 
-    if (!this.otpCode) {
-      this.errorMessage = 'Please enter the 6-digit OTP code.';
-      return;
-    }
-
-    this.authService.verifyOtp(this.otpCode).subscribe({
-      next: (res) => {
-        this.successMessage = 'Verification successful!';
-        clearInterval(this.cooldownInterval);
-        setTimeout(() => {
-          this.router.navigate(['/dashboard']);
-        }, 800);
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.error || 'Verification failed. Please check the code.';
-      }
-    });
-  }
-
-  protected onResendOtp(): void {
-    if (this.resendCooldown > 0) return;
-    
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    this.authService.resendOtp().subscribe({
-      next: (res) => {
-        this.successMessage = 'A new verification code has been dispatched.';
-        this.startCooldown();
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.error || 'Failed to resend code.';
-      }
-    });
-  }
 
   // Google / Facebook Mock Authentication flow
   protected triggerSocialLogin(provider: 'google' | 'facebook'): void {
@@ -181,17 +124,6 @@ export class Auth implements AfterViewInit {
     });
   }
 
-  private startCooldown(): void {
-    this.resendCooldown = 60;
-    clearInterval(this.cooldownInterval);
-    this.cooldownInterval = setInterval(() => {
-      if (this.resendCooldown > 0) {
-        this.resendCooldown--;
-      } else {
-        clearInterval(this.cooldownInterval);
-      }
-    }, 1000);
-  }
 
   ngAfterViewInit(): void {
     this.checkGoogleSdk();
@@ -255,55 +187,5 @@ export class Auth implements AfterViewInit {
     });
   }
 
-  protected toggleOtpLogin(): void {
-    this.isOtpLogin = !this.isOtpLogin;
-    this.isLoginOtpStep = false;
-    this.errorMessage = '';
-    this.successMessage = '';
-  }
 
-  protected onSendLoginOtp(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
-    if (!this.email) {
-      this.errorMessage = 'Please enter your email address.';
-      return;
-    }
-    this.isSubmitting = true;
-    this.http.post<any>(`${environment.apiUrl}/auth/login-otp-request`, { email: this.email }).subscribe({
-      next: (res) => {
-        this.isSubmitting = false;
-        this.successMessage = 'Verification OTP sent to your email!';
-        this.isLoginOtpStep = true;
-        this.startCooldown();
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        this.errorMessage = err.error?.error || 'Failed to send login OTP.';
-      }
-    });
-  }
-
-  protected onVerifyLoginOtp(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
-    if (!this.otpCode) {
-      this.errorMessage = 'Please enter the 6-digit OTP code.';
-      return;
-    }
-    this.isSubmitting = true;
-    this.http.post<any>(`${environment.apiUrl}/auth/login-otp-verify`, { email: this.email, code: this.otpCode }).subscribe({
-      next: (res) => {
-        this.isSubmitting = false;
-        this.successMessage = 'Login successful!';
-        this.authService.updateUser(res.user);
-        localStorage.setItem('token', res.token);
-        setTimeout(() => this.router.navigate(['/dashboard']), 800);
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        this.errorMessage = err.error?.error || 'Invalid or expired OTP code.';
-      }
-    });
-  }
 }

@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { GameService } from '../../services/game';
 import { AuthService, User } from '../../services/auth';
 
@@ -51,7 +52,7 @@ const SAFE_INDICES = [0, 8, 13, 21, 26, 34, 39, 47];
 
 @Component({
   selector: 'app-ludo',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './ludo.html',
   styleUrl: './ludo.scss'
 })

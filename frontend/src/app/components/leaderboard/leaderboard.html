@@ -1,85 +1,98 @@
-<div class="leaderboard-grid">
-  
-  <!-- Top Balances Panel -->
-  <div class="leaderboard-panel glass-panel">
-    <div class="panel-header">
-      <div class="d-flex align-items-center gap-3">
-        <svg class="header-icon icon-yellow" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-        </svg>
-        <h2>Top Balances</h2>
+@if (!hasPlayed) {
+  <div class="leaderboard-locked-wrapper text-center py-5 glass-panel" style="width: 100%; max-width: 550px; margin: 40px auto; padding: 45px 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; border-radius: 16px; border: 2px solid rgba(6, 182, 212, 0.2); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(10px);">
+    <div class="lock-graphic" style="font-size: 4.5rem; filter: drop-shadow(0 0 15px rgba(6, 182, 212, 0.25)); animation: lock-bob 3s infinite ease-in-out;">🔒</div>
+    <h2 style="font-size: 1.7rem; color: #fff; font-weight: 800; margin: 0;">Leaderboard Locked</h2>
+    <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; max-width: 420px; margin: 0 auto;">
+      Welcome to FortunePlayX! To join the global player rankings and unlock the competitive high-rollers leaderboard, you must first complete <strong>at least one match</strong>.
+    </p>
+    <a href="/dashboard" class="btn-primary" style="padding: 10px 24px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; margin-top: 10px; display: inline-block;">
+      Play First Game Now ⚔️
+    </a>
+  </div>
+} @else {
+  <div class="leaderboard-grid">
+    
+    <!-- Top Balances Panel -->
+    <div class="leaderboard-panel glass-panel">
+      <div class="panel-header">
+        <div class="d-flex align-items-center gap-3">
+          <svg class="header-icon icon-yellow" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          <h2>Top Balances</h2>
+        </div>
+        <span class="badge-count">Top 10 Ranked</span>
       </div>
-      <span class="badge-count">Top 10 Ranked</span>
+
+      @if (topBalances.length === 0) {
+        <div class="empty-state">
+          <p>No rankings recorded yet. Register and play to join the board!</p>
+        </div>
+      } @else {
+        <div class="leader-list">
+          @for (player of topBalances; track player.username; let idx = $index) {
+            <div class="leader-item glass-panel" [ngClass]="{
+              'rank-first': idx === 0,
+              'rank-second': idx === 1,
+              'rank-third': idx === 2
+            }">
+              <div class="rank-badge">
+                @if (idx === 0) { 🥇 }
+                @else if (idx === 1) { 🥈 }
+                @else if (idx === 2) { 🥉 }
+                @else { #{{ idx + 1 }} }
+              </div>
+              
+              <div class="player-details">
+                <span class="player-name">{{ player.username }}</span>
+              </div>
+
+              <div class="player-balance font-mono">
+                {{ player.balance | number:'1.2-2' }} <span class="coin-label">Coins</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
 
-    @if (topBalances.length === 0) {
-      <div class="empty-state">
-        <p>No rankings recorded yet. Register and play to join the board!</p>
+    <!-- Biggest Payout Wins Panel -->
+    <div class="leaderboard-panel glass-panel">
+      <div class="panel-header">
+        <div class="d-flex align-items-center gap-3">
+          <svg class="header-icon icon-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          <h2>Biggest Wins</h2>
+        </div>
+        <span class="badge-count">High-Rollers</span>
       </div>
-    } @else {
-      <div class="leader-list">
-        @for (player of topBalances; track player.username; let idx = $index) {
-          <div class="leader-item glass-panel" [ngClass]="{
-            'rank-first': idx === 0,
-            'rank-second': idx === 1,
-            'rank-third': idx === 2
-          }">
-            <div class="rank-badge">
-              @if (idx === 0) { 🥇 }
-              @else if (idx === 1) { 🥈 }
-              @else if (idx === 2) { 🥉 }
-              @else { #{{ idx + 1 }} }
-            </div>
-            
-            <div class="player-details">
-              <span class="player-name">{{ player.username }}</span>
-            </div>
 
-            <div class="player-balance font-mono">
-              {{ player.balance | number:'1.2-2' }} <span class="coin-label">Coins</span>
-            </div>
-          </div>
-        }
-      </div>
-    }
-  </div>
+      @if (topWins.length === 0) {
+        <div class="empty-state">
+          <p>No high wins recorded yet. Hit a high multiplier to claim a spot!</p>
+        </div>
+      } @else {
+        <div class="leader-list">
+          @for (win of topWins; track win.timestamp; let idx = $index) {
+            <div class="leader-item glass-panel" [ngClass]="{ 'rank-win-top': idx < 3 }">
+              <div class="rank-badge font-mono">
+                #{{ idx + 1 }}
+              </div>
+              
+              <div class="player-details">
+                <span class="player-name">{{ win.username }}</span>
+                <span class="game-tag badge-{{ win.game }}">{{ win.game | uppercase }}</span>
+              </div>
 
-  <!-- Biggest Payout Wins Panel -->
-  <div class="leaderboard-panel glass-panel">
-    <div class="panel-header">
-      <div class="d-flex align-items-center gap-3">
-        <svg class="header-icon icon-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-        </svg>
-        <h2>Biggest Wins</h2>
-      </div>
-      <span class="badge-count">High-Rollers</span>
+              <div class="player-balance text-green font-mono">
+                +{{ win.amount | number:'1.2-2' }} <span class="coin-label">Coins</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
 
-    @if (topWins.length === 0) {
-      <div class="empty-state">
-        <p>No high wins recorded yet. Hit a high multiplier to claim a spot!</p>
-      </div>
-    } @else {
-      <div class="leader-list">
-        @for (win of topWins; track win.timestamp; let idx = $index) {
-          <div class="leader-item glass-panel" [ngClass]="{ 'rank-win-top': idx < 3 }">
-            <div class="rank-badge font-mono">
-              #{{ idx + 1 }}
-            </div>
-            
-            <div class="player-details">
-              <span class="player-name">{{ win.username }}</span>
-              <span class="game-tag badge-{{ win.game }}">{{ win.game | uppercase }}</span>
-            </div>
-
-            <div class="player-balance text-green font-mono">
-              +{{ win.amount | number:'1.2-2' }} <span class="coin-label">Coins</span>
-            </div>
-          </div>
-        }
-      </div>
-    }
   </div>
-
-</div>
+}

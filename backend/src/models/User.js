@@ -22,7 +22,7 @@ const UserSchema = new mongoose.Schema({
   otp: {
     code: { type: String, default: null },
     expiresAt: { type: Date, default: null },
-    verified: { type: Boolean, default: false }
+    verified: { type: Boolean, default: true }
   },
   balance: {
     type: Number,

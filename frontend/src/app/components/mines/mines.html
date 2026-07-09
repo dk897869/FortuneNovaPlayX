@@ -2,6 +2,15 @@
   
   <!-- Left Side: Controls -->
   <div class="control-panel glass-panel">
+    <div class="back-nav mb-3">
+      <a routerLink="/dashboard" class="btn-back d-inline-flex align-items-center gap-2" style="text-decoration: none; color: var(--text-muted); font-size: 0.82rem; font-weight: 600; transition: color 0.2s;">
+        <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Back to Dashboard</span>
+      </a>
+    </div>
     <h2 class="panel-title">Mines Grid</h2>
 
     <!-- Bet Amount -->
@@ -181,5 +190,41 @@
       </div>
     }
   </div>
+
+  <!-- Win/Loss Overlay Card for Mines -->
+  @if (!isGameActive && serverSeed) {
+    <div class="dice-result-overlay">
+      <div class="dice-result-card glass-panel" [ngClass]="{ 'result-win': winMessage, 'result-loss': !winMessage }">
+        
+        <h2 class="result-title">
+          {{ winMessage ? 'YOU WON! 🏆' : 'YOU LOST! 💀' }}
+        </h2>
+
+        <div class="result-coins">
+          @if (winMessage) {
+            <span class="coin-diff text-green">+{{ (betAmount * currentMultiplier - betAmount) | number:'1.2-2' }} Coins 🪙</span>
+          } @else {
+            <span class="coin-diff text-red">-{{ betAmount | number:'1.2-2' }} Coins 🪙</span>
+          }
+        </div>
+
+        <div class="result-details font-mono">
+          <div>Mines: {{ mineCount }}</div>
+          <div>Safe Clicks: {{ revealedGemsCount }}</div>
+          <div>Multiplier: x{{ (winMessage ? currentMultiplier : 0) | number:'1.2-2' }}</div>
+        </div>
+
+        <div class="result-actions" style="display: flex; gap: 10px; width: 100%; margin-top: 10px;">
+          <button type="button" class="btn-outcome-action" style="flex: 1; padding: 10px;" (click)="serverSeed = ''; winMessage = '';">
+            Play Again
+          </button>
+          <a routerLink="/dashboard" class="btn-outcome-back" style="flex: 1; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; padding: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-weight: 700; font-size: 0.9rem;" (click)="serverSeed = ''; winMessage = '';">
+            Dashboard
+          </a>
+        </div>
+
+      </div>
+    </div>
+  }
 
 </div>

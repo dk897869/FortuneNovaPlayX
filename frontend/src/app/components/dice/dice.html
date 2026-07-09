@@ -1,19 +1,30 @@
 <div class="game-container">
-  
+
   <!-- Left Side: Controls -->
   <div class="control-panel glass-panel">
-    <h2 class="panel-title">Dice Roll</h2>
+    <div class="back-nav mb-3">
+      <a routerLink="/dashboard" class="btn-back d-inline-flex align-items-center gap-2" style="text-decoration: none; color: var(--text-muted); font-size: 0.82rem; font-weight: 600; transition: color 0.2s;">
+        <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Back to Dashboard</span>
+      </a>
+    </div>
+    <div class="top-bar">
+      <h2 class="panel-title">🎲 Ludo Dice</h2>
+    </div>
 
     <!-- Bet Amount -->
     <div class="form-group">
       <label class="form-label">Bet Amount</label>
       <div class="bet-input-wrapper">
-        <input 
-          type="number" 
-          class="form-input bet-input" 
-          min="0.01" 
+        <input
+          type="number"
+          class="form-input bet-input"
+          min="0.01"
           step="any"
-          [(ngModel)]="betAmount" 
+          [(ngModel)]="betAmount"
           [disabled]="isRolling"
         />
         <div class="bet-adjusters">
@@ -27,7 +38,13 @@
     <!-- Toggle Condition -->
     <div class="form-group">
       <label class="form-label">Roll Direction</label>
-      <button type="button" class="btn-secondary w-full d-flex align-items-center justify-content-between" (click)="toggleCondition()" [disabled]="isRolling">
+      <button
+        type="button"
+        class="btn-secondary w-full d-flex align-items-center justify-content-between"
+        [ngClass]="condition === 'over' ? 'dir-over' : 'dir-under'"
+        (click)="toggleCondition()"
+        [disabled]="isRolling"
+      >
         <span>Roll {{ condition | uppercase }}</span>
         <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="17 8 12 13 7 8"/>
@@ -38,13 +55,13 @@
     <!-- Target Value input -->
     <div class="form-group">
       <label class="form-label">Target Number</label>
-      <input 
-        type="number" 
-        class="form-input" 
-        [(ngModel)]="target" 
-        (input)="recalculateOdds()" 
-        min="1" 
-        max="99" 
+      <input
+        type="number"
+        class="form-input"
+        [(ngModel)]="target"
+        (input)="recalculateOdds()"
+        min="1"
+        max="99"
         step="0.01"
         [disabled]="isRolling"
       />
@@ -53,10 +70,10 @@
     <!-- Client Seed -->
     <div class="form-group">
       <label class="form-label">Client Seed</label>
-      <input 
-        type="text" 
-        class="form-input font-mono" 
-        [(ngModel)]="clientSeed" 
+      <input
+        type="text"
+        class="form-input font-mono"
+        [(ngModel)]="clientSeed"
         [disabled]="isRolling"
       />
     </div>
@@ -69,57 +86,74 @@
     }
 
     <!-- Roll Button -->
-    <button 
-      type="button" 
-      class="btn-primary w-full mt-4" 
-      [disabled]="isRolling || betAmount <= 0" 
+    <button
+      type="button"
+      class="btn-primary w-full mt-4"
+      [disabled]="isRolling || betAmount <= 0"
       (click)="onRoll()"
     >
       @if (isRolling) {
         Rolling...
       } @else {
-        Place Bet
+        🎲 Place Bet
       }
     </button>
   </div>
 
   <!-- Right Side: Game Arena -->
-  <div class="board-panel glass-panel">
-    
+  <div class="board-panel glass-panel" style="position: relative;">
+
+    <!-- Decorative ludo board corners -->
+    <span class="board-corner corner-red"></span>
+    <span class="board-corner corner-yellow"></span>
+    <span class="board-corner corner-blue"></span>
+    <span class="board-corner corner-green"></span>
+
+    <!-- Pip Die (visible while rolling) -->
+    @if (isRolling) {
+      <div class="dice-cube">
+        @for (cell of pipCells; track cell) {
+          <span class="pip" [class.active]="activePips.includes(cell)"></span>
+        }
+      </div>
+    }
+
     <!-- Big Roll Value Gauge -->
     <div class="roll-gauge-container">
-      <div class="roll-gauge-outer" [ngClass]="{
-        'cyan-glow': isRolling,
-        'green-glow': rollResult !== null && lastResult?.won,
-        'red-glow': rollResult !== null && !lastResult?.won
-      }">
-        <div class="roll-value" [ngClass]="{
-          'text-white': isRolling,
-          'text-green': rollResult !== null && lastResult?.won,
-          'text-red': rollResult !== null && !lastResult?.won
+      <div class="roll-gauge-ring" [class.spinning]="isRolling">
+        <div class="roll-gauge-outer" [ngClass]="{
+          'cyan-glow': isRolling,
+          'green-glow': rollResult !== null && lastResult?.won,
+          'red-glow': rollResult !== null && !lastResult?.won
         }">
-          {{ displayedRoll | number:'1.2-2' }}
-        </div>
-        <div class="gauge-label">
-          @if (isRolling) {
-            Rolling...
-          } @else if (rollResult !== null) {
-            {{ lastResult?.won ? 'WINNER!' : 'LOST' }}
-          } @else {
-            PREDICT ROLL
-          }
+          <div class="roll-value" [ngClass]="{
+            'text-white': isRolling,
+            'text-green': rollResult !== null && lastResult?.won,
+            'text-red': rollResult !== null && !lastResult?.won
+          }">
+            {{ displayedRoll | number:'1.2-2' }}
+          </div>
+          <div class="gauge-label">
+            @if (isRolling) {
+              Rolling...
+            } @else if (rollResult !== null) {
+              {{ lastResult?.won ? 'WINNER!' : 'LOST' }}
+            } @else {
+              PREDICT ROLL
+            }
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Interactive Odds Slider -->
     <div class="slider-wrapper mt-4">
-      <input 
-        type="range" 
-        min="1" 
-        max="99" 
-        step="0.01" 
-        class="dice-slider" 
+      <input
+        type="range"
+        min="1"
+        max="99"
+        step="0.01"
+        class="dice-slider"
         [(ngModel)]="target"
         (input)="recalculateOdds()"
         [style.background]="getSliderBackground()"
@@ -134,17 +168,17 @@
 
     <!-- Calculated Odds Info Grid -->
     <div class="odds-info-grid mt-4">
-      <div class="odds-card glass-panel">
+      <div class="odds-card glass-panel card-blue">
         <span class="label">Multiplier</span>
         <strong class="value text-cyan">x{{ multiplier | number:'1.4-4' }}</strong>
       </div>
-      
-      <div class="odds-card glass-panel">
+
+      <div class="odds-card glass-panel card-yellow">
         <span class="label">Win Chance</span>
         <strong class="value">{{ winChance | number:'1.2-2' }}%</strong>
       </div>
 
-      <div class="odds-card glass-panel">
+      <div class="odds-card glass-panel card-green">
         <span class="label">Est. Payout</span>
         <strong class="value" [ngClass]="{'text-green': betAmount > 0}">
           {{ (betAmount * multiplier) | number:'1.2-2' }}
@@ -156,12 +190,12 @@
     @if (lastResult) {
       <div class="fairness-panel glass-panel mt-4">
         <h3>Provably Fair Verification</h3>
-        
+
         <div class="fairness-row font-mono">
           <span class="label">Server Seed Hash (SHA256):</span>
           <span class="val" title="{{ lastResult.serverSeedHash }}">{{ lastResult.serverSeedHash }}</span>
         </div>
-        
+
         <div class="fairness-row font-mono">
           <span class="label">Plain Server Seed (Revealed):</span>
           <span class="val" title="{{ lastResult.serverSeed }}">{{ lastResult.serverSeed }}</span>
@@ -176,10 +210,63 @@
           <span class="label">Nonce:</span>
           <span class="val">{{ lastResult.nonce }}</span>
         </div>
-        
+
         <p class="verification-note mt-2">
           Verify this outcome by copying the seeds into the verifier on your <a routerLink="/dashboard" class="text-cyan">Dashboard</a>.
         </p>
+      </div>
+    }
+
+    <!-- Win/Loss Overlay Card -->
+    @if (lastResult && !isRolling) {
+      <div class="dice-result-overlay">
+
+        <!-- Confetti burst on a win -->
+        @if (lastResult.won) {
+          <div class="confetti-layer">
+            @for (piece of confettiPieces; track $index) {
+              <span
+                class="confetti-piece"
+                [style.left.%]="piece.left"
+                [style.background]="piece.color"
+                [style.animation-delay.s]="piece.delay"
+                [style.animation-duration.s]="piece.duration"
+                [style.transform]="'rotate(' + piece.rotate + 'deg)'"
+              ></span>
+            }
+          </div>
+        }
+
+        <div class="dice-result-card glass-panel" [ngClass]="{ 'result-win': lastResult.won, 'result-loss': !lastResult.won }">
+
+          <h2 class="result-title">
+            {{ lastResult.won ? 'YOU WON! 🏆' : 'YOU LOST! 💀' }}
+          </h2>
+
+          <div class="result-coins">
+            @if (lastResult.won) {
+              <span class="coin-diff text-green">+{{ (lastResult.payout - betAmount) | number:'1.2-2' }} Coins 🪙</span>
+            } @else {
+              <span class="coin-diff text-red">-{{ betAmount | number:'1.2-2' }} Coins 🪙</span>
+            }
+          </div>
+
+          <div class="result-details font-mono">
+            <div>Target: Roll {{ condition }} {{ target | number:'1.2-2' }}</div>
+            <div>Result: {{ lastResult.roll | number:'1.2-2' }}</div>
+            <div>Multiplier: x{{ lastResult.multiplier | number:'1.2-2' }}</div>
+          </div>
+
+          <div class="result-actions">
+            <button type="button" class="btn-outcome-action" (click)="playAgain()">
+              🎲 Play Again
+            </button>
+            <button type="button" class="btn-outcome-back" routerLink="/dashboard">
+              ↩ Back
+            </button>
+          </div>
+
+        </div>
       </div>
     }
   </div>

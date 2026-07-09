@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { GameService, MinesStartResponse, MinesRevealResponse } from '../../services/game';
 import { AuthService } from '../../services/auth';
 
@@ -12,7 +13,7 @@ interface CellState {
 
 @Component({
   selector: 'app-mines',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './mines.html',
   styleUrl: './mines.scss'
 })
@@ -306,5 +307,9 @@ export class Mines implements OnInit {
       setTimeout(() => this.playBeep(392.00, 0.1), 200); // G4
       setTimeout(() => this.playBeep(523.25, 0.3), 300); // C5
     } catch (e) {}
+  }
+
+  protected get revealedGemsCount(): number {
+    return this.cells.filter(c => c.status === 'gem').length;
   }
 }

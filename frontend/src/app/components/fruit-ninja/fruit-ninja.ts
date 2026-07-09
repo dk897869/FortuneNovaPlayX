@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { GameService } from '../../services/game';
 import { AuthService } from '../../services/auth';
 
@@ -13,7 +14,7 @@ interface FruitCell {
 
 @Component({
   selector: 'app-fruit-ninja',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './fruit-ninja.html',
   styleUrl: './fruit-ninja.scss'
 })
@@ -43,6 +44,13 @@ export class FruitNinja implements OnInit {
   protected serverSeedHash = '';
   protected nonce = 0;
 
+  // Fruit Ninja Custom Outcomes Card
+  protected isGameOver = false;
+  protected isGameCompleted = false;
+  protected slicedCount = 0;
+  protected bestScore = 0;
+  protected gainedCoins = 0;
+
   // Emojis for the fruits
   private readonly fruitEmojis = ['🍎', '🍉', '🍌', '🥥', '🍇', '🍓', '🍍', '🍊', '🍒', '🥝'];
   private audioCtx: AudioContext | null = null;
@@ -61,6 +69,10 @@ export class FruitNinja implements OnInit {
     this.errorMessage = '';
     this.winMessage = '';
     this.serverSeed = '';
+    this.isGameOver = false;
+    this.isGameCompleted = false;
+    this.slicedCount = 0;
+    this.gainedCoins = 0;
   }
 
   private getRandomFruit(): string {
@@ -156,6 +168,13 @@ export class FruitNinja implements OnInit {
           this.currentMultiplier = 0.0;
           this.serverSeed = res.serverSeed || '';
           this.errorMessage = 'BOOM! Sliced a bomb! Game over.';
+          
+          this.isGameOver = true;
+          this.slicedCount = this.cells.filter(c => c.status === 'sliced').length;
+          this.updateBestScore(this.slicedCount);
+          this.bestScore = this.getBestScore();
+          this.gainedCoins = -this.betAmount;
+
           this.playBombExplosion();
 
           // Reveal other bomb positions
@@ -177,7 +196,13 @@ export class FruitNinja implements OnInit {
             this.isGameActive = false;
             this.winMessage = `Ultimate Ninja! Cleanly sliced all fruits for x${res.currentMultiplier}!`;
             this.serverSeed = res.serverSeed || '';
-            
+
+            this.isGameCompleted = true;
+            this.slicedCount = this.cells.filter(c => c.status === 'sliced').length;
+            this.updateBestScore(this.slicedCount);
+            this.bestScore = this.getBestScore();
+            this.gainedCoins = Math.round((this.betAmount * this.currentMultiplier - this.betAmount) * 100) / 100;
+
             this.cells.forEach(c => {
               if (res.minePositions?.includes(c.index)) {
                 c.status = 'bomb-unhit';
@@ -206,6 +231,12 @@ export class FruitNinja implements OnInit {
         this.isGameActive = false;
         this.serverSeed = res.serverSeed;
         this.winMessage = `Fruit sliced successfully! Cashed out x${this.currentMultiplier.toFixed(2)}: Received ${res.payout.toFixed(2)} Coins.`;
+
+        this.isGameCompleted = true;
+        this.slicedCount = this.cells.filter(c => c.status === 'sliced').length;
+        this.updateBestScore(this.slicedCount);
+        this.bestScore = this.getBestScore();
+        this.gainedCoins = Math.round((this.betAmount * this.currentMultiplier - this.betAmount) * 100) / 100;
         
         // Show remaining bombs
         this.cells.forEach(c => {
@@ -233,6 +264,32 @@ export class FruitNinja implements OnInit {
       this.betAmount = Math.min(user.balance, Math.round((this.betAmount * 2) * 100) / 100);
     } else if (action === 'max') {
       this.betAmount = user.balance;
+    }
+  }
+
+  protected getBestScore(): number {
+    const best = localStorage.getItem('fruit_ninja_best');
+    return best ? parseInt(best, 10) : 0;
+  }
+
+  protected updateBestScore(score: number): void {
+    const currentBest = this.getBestScore();
+    if (score > currentBest) {
+      localStorage.setItem('fruit_ninja_best', score.toString());
+    }
+  }
+
+  protected onClaimDouble(): void {
+    if (this.gainedCoins <= 0) {
+      alert("No winnings to double!");
+      return;
+    }
+    alert("Watching Sponsor Ad... 📺 Your cashout profit has been doubled as a bonus!");
+    const bonus = this.gainedCoins;
+    this.gainedCoins += bonus;
+    const current = this.authService.currentUser();
+    if (current) {
+      this.authService.updateUser({ ...current, balance: current.balance + bonus });
     }
   }
 

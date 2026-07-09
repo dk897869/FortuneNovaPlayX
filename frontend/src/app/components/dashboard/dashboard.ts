@@ -2,12 +2,13 @@ import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
 import { WalletService, LedgerEntry } from '../../services/wallet';
 import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
@@ -16,35 +17,33 @@ export class Dashboard implements OnInit {
   protected readonly authService = inject(AuthService);
   private readonly http = inject(HttpClient);
 
-  // Calculated Stats
   protected get totalWagered(): number {
     const bets = this.history.filter(h => h.type === 'bet');
-    if (bets.length === 0) return 5432.50;
+    if (bets.length === 0) return 0;
     return Math.abs(bets.reduce((sum, h) => sum + h.amount, 0));
   }
 
   protected get totalWon(): number {
     const wins = this.history.filter(h => h.type === 'win');
-    if (wins.length === 0) return 2485.30;
+    if (wins.length === 0) return 0;
     return wins.reduce((sum, h) => sum + h.amount, 0);
   }
 
   protected get winRate(): number {
     const betsCount = this.history.filter(h => h.type === 'bet').length;
-    if (betsCount === 0) return 68.42;
+    if (betsCount === 0) return 0;
     const winsCount = this.history.filter(h => h.type === 'win').length;
     return Number(((winsCount / betsCount) * 100).toFixed(2));
   }
 
   protected get gamesPlayed(): number {
     const played = this.history.filter(h => h.type === 'bet').length;
-    if (played === 0) return 128;
     return played;
   }
 
   protected get biggestWin(): number {
     const wins = this.history.filter(h => h.type === 'win').map(h => h.amount);
-    if (wins.length === 0) return 250.00;
+    if (wins.length === 0) return 0;
     return Math.max(...wins);
   }
 
@@ -54,7 +53,6 @@ export class Dashboard implements OnInit {
 
   protected get gamesWonCount(): number {
     const wins = this.history.filter(h => h.type === 'win').length;
-    if (wins === 0) return 88;
     return wins;
   }
 
@@ -66,6 +64,10 @@ export class Dashboard implements OnInit {
   protected totalPages = 1;
   protected totalCount = 0;
   protected limit = 8;
+
+  // Leaderboard & Play status
+  protected hasPlayed = false;
+  protected topBalances: Array<{ username: string; balance: number }> = [];
 
   // Fairness Verifier States
   protected verifierServerSeed = '';
@@ -90,6 +92,17 @@ export class Dashboard implements OnInit {
         this.currentPage = res.page;
         this.totalPages = res.totalPages;
         this.totalCount = res.totalCount;
+
+        const hasBets = res.history.some(tx => tx.type === 'bet');
+        this.hasPlayed = hasBets;
+
+        if (this.hasPlayed) {
+          this.walletService.getLeaderboard().subscribe({
+            next: (leaderRes) => {
+              this.topBalances = leaderRes.topBalances.slice(0, 5);
+            }
+          });
+        }
       }
     });
   }
